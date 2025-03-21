@@ -51,23 +51,26 @@ class Diagram:
         if SETTINGS["LIGHT"]:
             corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
             ax.plot([-corner, corner], [-corner, corner],
-                    color=SETTINGS["LIGHT_COLOR"])
+                    color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
             ax.plot([-corner, corner], [corner, -corner],
-                    color=SETTINGS["LIGHT_COLOR"])
+                    color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
 
             if SETTINGS["SPACE_LIKE"]:
                 ax.fill_between([0, corner, SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
-                                [0, -corner, -SETTINGS["WIDTH"]], alpha=0.2, color=SETTINGS["SPACE_COLOR"])
+                                [0, -corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
+                                color=SETTINGS["SPACE_COLOR"])
                 ax.fill_between([0, -corner, -SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
-                                [0, -corner, -SETTINGS["WIDTH"]], alpha=0.2, color=SETTINGS["SPACE_COLOR"])
+                                [0, -corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
+                                color=SETTINGS["SPACE_COLOR"])
 
             if SETTINGS["TIME_LIKE"]:
                 ax.fill_between([-corner, 0, corner], [corner, 0, corner],
-                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], alpha=0.2,
+                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+                                alpha=SETTINGS["TIME_ALPHA"],
                                 color=SETTINGS["TIME_COLOR"])
                 ax.fill_between([-corner, 0, corner],
                                 [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]], [-corner, 0, -corner],
-                                alpha=0.2, color=SETTINGS["TIME_COLOR"])
+                                alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
 
         if SETTINGS["GRID"]:
             ax.grid()
@@ -92,7 +95,8 @@ class Diagram:
 
         for i, data_point in enumerate(self._data_points):
             ax.plot(data_point.z, data_point.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
-                    linestyle="None", label=rf"$z_{i}$: " + str(data_point.z) + rf", $t_{i}$: " + str(data_point.t))
+                    linestyle="None",
+                    label=rf"$z_{i + 1}$: " + str(data_point.z) + rf", $t_{i + 1}$: " + str(data_point.t))
 
             z0 = 0
             t0 = 0
@@ -125,7 +129,8 @@ class Diagram:
                 ax.fill_between([-SETTINGS["WIDTH"], data_point.z, SETTINGS["WIDTH"]],
                                 [SETTINGS["WIDTH"] + data_point.z + data_point.t, data_point.t,
                                  SETTINGS["WIDTH"] - data_point.z + data_point.t],
-                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], alpha=0.2,
+                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+                                alpha=SETTINGS["TIME_ALPHA"],
                                 color=SETTINGS["DATA_COLOR"])
 
             if data_point.past:
@@ -133,7 +138,7 @@ class Diagram:
                                 [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
                                 [-SETTINGS["WIDTH"] - data_point.z + data_point.t, data_point.t,
                                  -SETTINGS["WIDTH"] + data_point.z + data_point.t],
-                                alpha=0.2, color=SETTINGS["TIME_COLOR"])
+                                alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
 
         for diff in self._differences:
             if diff.connection == "DIRECT":
