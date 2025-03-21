@@ -26,7 +26,6 @@ class Diagram:
     def add_difference(self, difference):
         self._differences.append(difference)
 
-
     def draw(self, plot_name):
         if self.figure is None:
             self.prepare()
@@ -50,10 +49,25 @@ class Diagram:
             ax.set_ylabel(SETTINGS["Y_AXIS_LABEL"])
 
         if SETTINGS["LIGHT"]:
-            ax.plot([-SETTINGS["WIDTH"], SETTINGS["WIDTH"]], [-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+            corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+            ax.plot([-corner, corner], [-corner, corner],
                     color=SETTINGS["LIGHT_COLOR"])
-            ax.plot([-SETTINGS["WIDTH"], SETTINGS["WIDTH"]], [SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
+            ax.plot([-corner, corner], [corner, -corner],
                     color=SETTINGS["LIGHT_COLOR"])
+
+            if SETTINGS["SPACE_LIKE"]:
+                ax.fill_between([0, corner, SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
+                                [0, -corner, -SETTINGS["WIDTH"]], alpha=0.2, color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between([0, -corner, -SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
+                                [0, -corner, -SETTINGS["WIDTH"]], alpha=0.2, color=SETTINGS["SPACE_COLOR"])
+
+            if SETTINGS["TIME_LIKE"]:
+                ax.fill_between([-corner, 0, corner], [corner, 0, corner],
+                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], alpha=0.2,
+                                color=SETTINGS["TIME_COLOR"])
+                ax.fill_between([-corner, 0, corner],
+                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]], [-corner, 0, -corner],
+                                alpha=0.2, color=SETTINGS["TIME_COLOR"])
 
         if SETTINGS["GRID"]:
             ax.grid()
@@ -107,6 +121,20 @@ class Diagram:
                 if data_point.time == "FULL":
                     ax.plot([z0, zS], [t0, tS], color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"])
 
+            if data_point.future:
+                ax.fill_between([-SETTINGS["WIDTH"], data_point.z, SETTINGS["WIDTH"]],
+                                [SETTINGS["WIDTH"] + data_point.z + data_point.t, data_point.t,
+                                 SETTINGS["WIDTH"] - data_point.z + data_point.t],
+                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], alpha=0.2,
+                                color=SETTINGS["DATA_COLOR"])
+
+            if data_point.past:
+                ax.fill_between([-SETTINGS["WIDTH"], data_point.z, SETTINGS["WIDTH"]],
+                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
+                                [-SETTINGS["WIDTH"] - data_point.z + data_point.t, data_point.t,
+                                 -SETTINGS["WIDTH"] + data_point.z + data_point.t],
+                                alpha=0.2, color=SETTINGS["TIME_COLOR"])
+
         for diff in self._differences:
             if diff.connection == "DIRECT":
                 ax.plot([diff.first.z, diff.second.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
@@ -137,7 +165,6 @@ class Diagram:
                     ax.plot([diff.second.z, zS], [diff.second.t, tS], color=SETTINGS["DIFF_COLOR"],
                             linestyle=SETTINGS["DIFF_LINE"])
 
-
         if len(self._world_lines) + len(self._data_points) > 0 and SETTINGS["LEGEND"]:
             ax.legend()
 
@@ -160,12 +187,14 @@ class WorldLine:
 
 class DataPoint:
 
-    def __init__(self, z, t, time=None, space=None, world_line=None):
+    def __init__(self, z, t, time=None, space=None, world_line=None, future=False, past=False):
         self.z = z
         self.t = t
         self.time = time
         self.space = space
         self.world_line = world_line
+        self.future = future
+        self.past = past
 
 
 class Difference:
@@ -176,6 +205,7 @@ class Difference:
         self.direction = direction
         self.beta = beta
         self.connection = connection
+
 
 def intersect(z1, t1, z2, t2, beta):
     z = (beta * (t2 - t1) - beta ** 2 * z2 + z1) / (1 - beta ** 2)

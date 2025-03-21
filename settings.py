@@ -17,6 +17,10 @@ SETTINGS = {
 
     "LIGHT": True,
     "LIGHT_COLOR": "gray",
+    "SPACE_LIKE": False,
+    "SPACE_COLOR": "C2",
+    "TIME_LIKE": False,
+    "TIME_COLOR": "C0",
 
     "WORLD_LINE": "--",
     "WORLD_LINE_COLOR": "C1",
