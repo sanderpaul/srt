@@ -24,4 +24,7 @@ SETTINGS = {
     "DATA_COLOR": "C0",
     "DATA_LINE": "--",
     "DATA_MARKER": "o",
+
+    "DIFF_COLOR": "C2",
+    "DIFF_LINE": ":"
 }

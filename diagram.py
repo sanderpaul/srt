@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from zmq.backend import first
 
 from settings import *
 
@@ -9,6 +10,7 @@ class Diagram:
     def __init__(self):
         self._world_lines = []
         self._data_points = []
+        self._differences = []
 
         self.figure = None
         self.axes = None
@@ -20,6 +22,10 @@ class Diagram:
     def add_data_point(self, point):
         self._data_points.append(point)
         return self
+
+    def add_difference(self, difference):
+        self._differences.append(difference)
+
 
     def draw(self, plot_name):
         if self.figure is None:
@@ -101,6 +107,37 @@ class Diagram:
                 if data_point.time == "FULL":
                     ax.plot([z0, zS], [t0, tS], color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"])
 
+        for diff in self._differences:
+            if diff.connection == "DIRECT":
+                ax.plot([diff.first.z, diff.second.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
+                        linestyle=SETTINGS["DIFF_LINE"])
+
+            elif diff.connection == "COORDINATES":
+                if diff.beta == 0.0:
+                    ax.plot([diff.first.z, diff.first.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([diff.first.z, diff.second.z], [diff.first.t, diff.first.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([diff.second.z, diff.second.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([diff.first.z, diff.second.z], [diff.second.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                else:
+                    zT, tT = intersect(diff.first.z, diff.first.t, diff.second.z, diff.second.t,
+                                       diff.beta)
+                    zS, tS = intersect(diff.second.z, diff.second.t, diff.first.z, diff.first.t,
+                                       diff.beta)
+
+                    ax.plot([zT, diff.first.z], [tT, diff.first.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([diff.second.z, zT], [diff.second.t, tT], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([zS, diff.first.z], [tS, diff.first.t], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+                    ax.plot([diff.second.z, zS], [diff.second.t, tS], color=SETTINGS["DIFF_COLOR"],
+                            linestyle=SETTINGS["DIFF_LINE"])
+
+
         if len(self._world_lines) + len(self._data_points) > 0 and SETTINGS["LEGEND"]:
             ax.legend()
 
@@ -130,6 +167,15 @@ class DataPoint:
         self.space = space
         self.world_line = world_line
 
+
+class Difference:
+
+    def __init__(self, first, second, direction=None, connection="DIRECT", beta=0.0):
+        self.first = first
+        self.second = second
+        self.direction = direction
+        self.beta = beta
+        self.connection = connection
 
 def intersect(z1, t1, z2, t2, beta):
     z = (beta * (t2 - t1) - beta ** 2 * z2 + z1) / (1 - beta ** 2)
