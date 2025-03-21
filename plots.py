@@ -1,21 +1,25 @@
 from diagram import *
 from settings import *
-import matplotlib.pyplot as plt
-
-settings = SETTINGS
 
 # First image: only showing the axis
-settings["LIGHT"] = False
-plot = Diagram("empty", settings)
-plot.draw()
+SETTINGS["LIGHT"] = False
+plot = Diagram()
+plot.draw("empty")
 
-# Second image: introduction of light
-settings["LIGHT"] = True
-plot = Diagram("light", settings)
-plot.draw()
+# Second images: introduce a datapoint
+plot = Diagram()
+plot.add_data_point(DataPoint(1, 2, time=None, space=None))
+plot.draw("one_point_no_lines")
 
-# Third image: world line at 0.6
-plot = Diagram("world", settings)
-world_line = WorldLine(0, 0, 0.6)
-plot.add_world_line(world_line)
-plot.draw()
+plot = Diagram()
+plot.add_data_point(DataPoint(1, 2, time="PART", space="PART"))
+plot.draw("one_point_partial_lines")
+
+plot = Diagram()
+plot.add_data_point(DataPoint(1, 2, time="FULL", space="FULL"))
+plot.draw("one_point_full_lines")
+
+# Third image: introduction of light
+SETTINGS["LIGHT"] = True
+plot = Diagram()
+plot.draw("light")

@@ -20,4 +20,8 @@ SETTINGS = {
 
     "WORLD_LINE": "--",
     "WORLD_LINE_COLOR": "C1",
+
+    "DATA_COLOR": "C0",
+    "DATA_LINE": "--",
+    "DATA_MARKER": "o",
 }
