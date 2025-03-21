@@ -70,9 +70,9 @@ class Diagram:
                 ax.plot(line.beta * (r - line.t) + line.z, r, linestyle=line.linestyle,
                         color=line.color, label=label)
 
-        for data_point in self._data_points:
+        for i, data_point in enumerate(self._data_points):
             ax.plot(data_point.z, data_point.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
-                    linestyle="None", label="z: " + str(data_point.z) + ", t: " + str(data_point.t))
+                    linestyle="None", label=rf"$z_{i}$: " + str(data_point.z) + rf", $t_{i}$: " + str(data_point.t))
 
             z0 = 0
             t0 = 0
