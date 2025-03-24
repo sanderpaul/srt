@@ -72,7 +72,6 @@ plot.draw("light_with_space")
 SETTINGS["SPACE_LIKE"] = False
 
 # Fifth image: Future and Past
-
 plot = Diagram()
 plot.add_data_point(DataPoint(1, 2, time=None, space=None))
 plot.add_data_point(DataPoint(3, 1, time=None, space=None))
@@ -92,3 +91,24 @@ plot = Diagram()
 plot.add_data_point(DataPoint(1, 2, time=None, space=None, future=True, past=True))
 plot.add_data_point(DataPoint(3, 1, time=None, space=None, future=True, past=True))
 plot.draw("two_points_future_past")
+
+# Sixth image: Introduction of worldlines
+plot = Diagram()
+plot.add_data_point(DataPoint(0.0, 0, time=None, space=None))
+plot.draw("worldline_first_point")
+
+plot.add_data_point(DataPoint(0.6, 1, time="HALF", space="HALF"))
+plot.draw("worldline_second_point")
+
+plot.add_data_point(DataPoint(1.2, 2, time="HALF", space="HALF"))
+plot.draw("worldline_third_point")
+
+plot.add_data_point(DataPoint(1.8, 3, time="HALF", space="HALF"))
+plot.draw("worldline_fourth_point")
+
+plot.add_world_line(WorldLine(0, 0, 0.6, time=True, space=False))
+plot.draw("worldline_introduce_line")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(0, 0, 0.6, time=True, space=False))
+plot.draw("worldline_time_angle")

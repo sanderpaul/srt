@@ -15,6 +15,12 @@ class Diagram:
         self.figure = None
         self.axes = None
 
+    def __del__(self):
+        del self._data_points
+        del self._differences
+        del self._world_lines
+        del self.figure
+
     def add_world_line(self, line):
         self._world_lines.append(line)
         return self
@@ -32,6 +38,9 @@ class Diagram:
 
         plt.figure(self.figure)
         plt.savefig(f"./img/{plot_name}.png")
+        plt.close(self.figure)
+
+        self.figure = None
 
     def prepare(self):
 
@@ -111,14 +120,14 @@ class Diagram:
                 zS, tS = intersect(data_point.world_line.z, data_point.world_line.t, data_point.z, data_point.t,
                                    data_point.world_line.beta)
 
-            if data_point.time is not None:
+            if data_point.space is not None:
                 ax.plot([zT, data_point.z], [tT, data_point.t], color=SETTINGS["DATA_COLOR"],
                         linestyle=SETTINGS["DATA_LINE"])
 
                 if data_point.time == "FULL":
                     ax.plot([z0, zT], [t0, tT], color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"])
 
-            if data_point.space is not None:
+            if data_point.time is not None:
                 ax.plot([zS, data_point.z], [tS, data_point.t], color=SETTINGS["DATA_COLOR"],
                         linestyle=SETTINGS["DATA_LINE"])
 
@@ -189,6 +198,15 @@ class WorldLine:
         self.linestyle = linestyle
         self.color = color
 
+    def __del__(self):
+        del self.beta
+        del self.z
+        del self.t
+        del self.time
+        del self.space
+        del self.linestyle
+        del self.color
+
 
 class DataPoint:
 
@@ -201,6 +219,14 @@ class DataPoint:
         self.future = future
         self.past = past
 
+    def __del__(self):
+        del self.z
+        del self.t
+        del self.time
+        del self.space
+        del self.world_line
+        del self.future
+        del self.past
 
 class Difference:
 
@@ -210,6 +236,13 @@ class Difference:
         self.direction = direction
         self.beta = beta
         self.connection = connection
+
+    def __del__(self):
+        del self.first
+        del self.second
+        del self.direction
+        del self.beta
+        del self.connection
 
 
 def intersect(z1, t1, z2, t2, beta):
