@@ -1,36 +1,128 @@
+import copy
 import matplotlib.pyplot as plt
 import numpy as np
-from zmq.backend import first
-
 from settings import *
+
+
+class Point:
+
+    def __init__(self, z, t):
+        self.z = z
+        self.t = t
+
+
+class Event(Point):
+
+    def __init__(self, z, t, settings: dict, world_line=None):
+        super().__init__(z, t)
+        self.lines = []
+        self.settings = settings
+
+        if world_line is not None:
+            self.lines.extend(
+                Difference(first=self, second=world_line.origin, settings=settings,
+                           beta=world_line.beta, color=SETTINGS["DATA_COLOR"],
+                           linestyle=SETTINGS["DATA_LINE"]
+                           ).lines
+            )
+
+        else:
+            self.lines.extend(
+                Difference(first=self, second=Point(0, 0), settings=settings,
+                           beta=0.0, color=SETTINGS["DATA_COLOR"],
+                           linestyle=SETTINGS["DATA_LINE"]
+                           ).lines
+            )
+
+    def to_point(self):
+        return Point(self.z, self.t)
+
+
+class WorldLine:
+
+    def __init__(self, origin: Point, beta, settings: dict, linestyle=SETTINGS["WORLD_LINE"],
+                 color=SETTINGS["WORLD_LINE_COLOR"]):
+
+        self.beta = beta
+        self.origin = origin
+        self.lines = []
+
+        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+
+        r = np.linspace(- outer_corner, outer_corner, 2)
+
+        label = fr"$\beta =$ {beta}" if (float(origin.t) != 0.0 or float(
+            origin.z) != 0.0) else fr"$\beta =$ {beta}, z: {origin.z}, t: {origin.t}"
+
+        if "time" in settings.keys() and settings["time"]:
+            self.lines.append(plt.Line2D(beta * (r - origin.t) + origin.z, r,
+                                         color=color, linestyle=linestyle, label=label))
+
+            if "space" in settings.keys() and settings["space"]:
+                self.lines.append(plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle))
+
+        elif "space" in settings.keys() and settings["space"]:
+            self.lines.append(
+                plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle, label=label))
+
+
+class Difference:
+
+    def __init__(self, first: Point, second: Point, settings: dict, beta=0.0, color=SETTINGS["DIFF_COLOR"],
+                 linestyle=SETTINGS["DIFF_LINE"]):
+        self.lines = []
+
+        if "direct" in settings.keys() and settings["direct"]:
+            self.lines.append(plt.Line2D([first.z, second.z], [first.t, second.t], color=color, linestyle=linestyle))
+            return
+
+        zT, tT = intersect(first, second, beta)  # Intersection with Time Axis
+        zS, tS = intersect(second, first, beta)  # Intersection with Space Axis
+
+        if "t_first" in settings.keys() and settings["t_first"]:
+            self.lines.append(plt.Line2D([zT, first.z], [tT, first.t], color=color, linestyle=linestyle))
+
+        if "t_second" in settings.keys() and settings["t_second"]:
+            self.lines.append(plt.Line2D([zT, second.z], [tT, second.t], color=color, linestyle=linestyle))
+
+        if "z_first" in settings.keys() and settings["z_first"]:
+            self.lines.append(plt.Line2D([zS, first.z], [tS, first.t], color=color, linestyle=linestyle))
+
+        if "z_second" in settings.keys() and settings["z_second"]:
+            self.lines.append(plt.Line2D([zS, second.z], [tS, second.t], color=color, linestyle=linestyle))
 
 
 class Diagram:
 
     def __init__(self):
-        self._world_lines = []
-        self._data_points = []
-        self._differences = []
+        self._lines = []
+        self._events = []
 
         self.figure = None
         self.axes = None
 
     def __del__(self):
-        del self._data_points
-        del self._differences
-        del self._world_lines
+        del self._events
+        del self._lines
         del self.figure
 
-    def add_world_line(self, line):
-        self._world_lines.append(line)
+    def add_world_line(self, world_line: WorldLine):
+        for line in world_line.lines:
+            self._lines.append(line)
+
         return self
 
-    def add_data_point(self, point):
-        self._data_points.append(point)
+    def add_event(self, event: Event):
+        self._events.append(event)
+
+        for line in event.lines:
+            self._lines.append(line)
+
         return self
 
-    def add_difference(self, difference):
-        self._differences.append(difference)
+    def add_difference(self, difference: Difference):
+        for diff in difference.lines:
+            self._lines.append(diff)
 
     def draw(self, plot_name):
         if self.figure is None:
@@ -84,171 +176,39 @@ class Diagram:
         if SETTINGS["GRID"]:
             ax.grid()
 
-        for line in self._world_lines:
+        for line in self._lines:
+            ax.add_line(copy.deepcopy(line))
 
-            if line.time is not None:
-                ax.add_line(line.time)
-
-            if line.space is not None:
-                ax.add_line(line.space)
-
-        for i, data_point in enumerate(self._data_points):
-            ax.plot(data_point.z, data_point.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
+        for i, event in enumerate(self._events):
+            ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
                     linestyle="None",
-                    label=rf"$z_{i + 1}$: " + str(data_point.z) + rf", $t_{i + 1}$: " + str(data_point.t))
+                    label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " + str(event.t))
 
-            z0 = 0
-            t0 = 0
-            zS = 0
-            zT = data_point.z
-            tS = data_point.t
-            tT = 0
+            if "future" in event.settings.keys() and event.settings["future"]:
+                ax.fill_between(
+                    [-SETTINGS["WIDTH"], event.z, SETTINGS["WIDTH"]],
+                    [SETTINGS["WIDTH"] + event.z + event.t, event.t, SETTINGS["WIDTH"] - event.z + event.t],
+                    [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["DATA_COLOR"]
+                )
 
-            if type(data_point.world_line) == WorldLine:
-                zT, tT = intersect(data_point.z, data_point.t, data_point.world_line.z, data_point.world_line.t,
-                                   data_point.world_line.beta)
-                zS, tS = intersect(data_point.world_line.z, data_point.world_line.t, data_point.z, data_point.t,
-                                   data_point.world_line.beta)
+            if "past" in event.settings.keys() and event.settings["past"]:
+                ax.fill_between(
+                    [-SETTINGS["WIDTH"], event.z, SETTINGS["WIDTH"]],
+                    [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
+                    [-SETTINGS["WIDTH"] - event.z + event.t, event.t, -SETTINGS["WIDTH"] + event.z + event.t],
+                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
+                )
 
-            if data_point.space is not None:
-                ax.plot([zT, data_point.z], [tT, data_point.t], color=SETTINGS["DATA_COLOR"],
-                        linestyle=SETTINGS["DATA_LINE"])
-
-                if data_point.time == "FULL":
-                    ax.plot([z0, zT], [t0, tT], color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"])
-
-            if data_point.time is not None:
-                ax.plot([zS, data_point.z], [tS, data_point.t], color=SETTINGS["DATA_COLOR"],
-                        linestyle=SETTINGS["DATA_LINE"])
-
-                if data_point.time == "FULL":
-                    ax.plot([z0, zS], [t0, tS], color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"])
-
-            if data_point.future:
-                ax.fill_between([-SETTINGS["WIDTH"], data_point.z, SETTINGS["WIDTH"]],
-                                [SETTINGS["WIDTH"] + data_point.z + data_point.t, data_point.t,
-                                 SETTINGS["WIDTH"] - data_point.z + data_point.t],
-                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
-                                alpha=SETTINGS["TIME_ALPHA"],
-                                color=SETTINGS["DATA_COLOR"])
-
-            if data_point.past:
-                ax.fill_between([-SETTINGS["WIDTH"], data_point.z, SETTINGS["WIDTH"]],
-                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
-                                [-SETTINGS["WIDTH"] - data_point.z + data_point.t, data_point.t,
-                                 -SETTINGS["WIDTH"] + data_point.z + data_point.t],
-                                alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
-
-        for diff in self._differences:
-            if diff.connection == "DIRECT":
-                ax.plot([diff.first.z, diff.second.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
-                        linestyle=SETTINGS["DIFF_LINE"])
-
-            elif diff.connection == "COORDINATES":
-                if diff.beta == 0.0:
-                    ax.plot([diff.first.z, diff.first.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([diff.first.z, diff.second.z], [diff.first.t, diff.first.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([diff.second.z, diff.second.z], [diff.first.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([diff.first.z, diff.second.z], [diff.second.t, diff.second.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                else:
-                    zT, tT = intersect(diff.first.z, diff.first.t, diff.second.z, diff.second.t,
-                                       diff.beta)
-                    zS, tS = intersect(diff.second.z, diff.second.t, diff.first.z, diff.first.t,
-                                       diff.beta)
-
-                    ax.plot([zT, diff.first.z], [tT, diff.first.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([diff.second.z, zT], [diff.second.t, tT], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([zS, diff.first.z], [tS, diff.first.t], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-                    ax.plot([diff.second.z, zS], [diff.second.t, tS], color=SETTINGS["DIFF_COLOR"],
-                            linestyle=SETTINGS["DIFF_LINE"])
-
-        if len(self._world_lines) + len(self._data_points) > 0 and SETTINGS["LEGEND"]:
+        if len(self._lines) + len(self._events) > 0 and SETTINGS["LEGEND"]:
             ax.legend()
 
         self.figure = figure
         self.axes = ax
 
 
-class WorldLine:
+def intersect(first: Point, second: Point, beta):
+    z = (beta * (second.t - first.t) - beta ** 2 * second.z + first.z) / (1 - beta ** 2)
+    t = beta * (z - second.z) + second.t
 
-    def __init__(self, z, t, beta, time=True, space=True, linestyle=SETTINGS["WORLD_LINE"],
-                 color=SETTINGS["WORLD_LINE_COLOR"]):
-        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-
-        self.time = None
-        self.space = None
-
-        r = np.linspace(- outer_corner, outer_corner, 100)
-
-        label = fr"$\beta =$ {beta}" if t != 0.0 or z != 0.0 else fr"$\beta =$ {beta}, z: {z}, t: {t}"
-
-        if time:
-            self.time = plt.Line2D(beta * (r - t) + z, r, color=color, linestyle=linestyle, label=label)
-
-            if space:
-                self.space = plt.Line2D(r, beta * (r - z) + t, color=color, linestyle=linestyle)
-
-        elif space:
-            self.space = plt.Line2D(r, beta * (r - z) + t, color=color, linestyle=linestyle, label=label)
-
-        self.beta = beta
-        self.z = z
-        self.t = t
-
-    def __del__(self):
-        del self.beta
-        del self.z
-        del self.t
-        del self.time
-        del self.space
-
-
-class DataPoint:
-
-    def __init__(self, z, t, time=None, space=None, world_line=None, future=False, past=False):
-        self.z = z
-        self.t = t
-        self.time = time
-        self.space = space
-        self.world_line = world_line
-        self.future = future
-        self.past = past
-
-    def __del__(self):
-        del self.z
-        del self.t
-        del self.time
-        del self.space
-        del self.world_line
-        del self.future
-        del self.past
-
-class Difference:
-
-    def __init__(self, first, second, direction=None, connection="DIRECT", beta=0.0):
-        self.first = first
-        self.second = second
-        self.direction = direction
-        self.beta = beta
-        self.connection = connection
-
-    def __del__(self):
-        del self.first
-        del self.second
-        del self.direction
-        del self.beta
-        del self.connection
-
-
-def intersect(z1, t1, z2, t2, beta):
-    z = (beta * (t2 - t1) - beta ** 2 * z2 + z1) / (1 - beta ** 2)
-    t = beta * (z - z2) + t2
-
-    return z, t
+    return round(z, 2), round(t, 2)
