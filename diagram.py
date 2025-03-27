@@ -85,22 +85,12 @@ class Diagram:
             ax.grid()
 
         for line in self._world_lines:
-            r = np.linspace(-SETTINGS["WIDTH"], SETTINGS["WIDTH"], 100)
 
-            label = r"$\beta =$" + str(line.beta)
-            if line.t != 0.0 or line.z != 0.0:
-                label = label + ", z: " + str(line.z) + ", t: " + str(line.t)
+            if line.time is not None:
+                ax.add_line(line.time)
 
-            if line.space:
-                ax.plot(r, line.beta * (r - line.z) + line.t, linestyle=line.linestyle,
-                        color=line.color, label=label)
-                if line.time:
-                    ax.plot(line.beta * (r - line.t) + line.z, r, linestyle=line.linestyle,
-                            color=line.color)
-
-            elif line.time:
-                ax.plot(line.beta * (r - line.t) + line.z, r, linestyle=line.linestyle,
-                        color=line.color, label=label)
+            if line.space is not None:
+                ax.add_line(line.space)
 
         for i, data_point in enumerate(self._data_points):
             ax.plot(data_point.z, data_point.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
@@ -190,13 +180,27 @@ class WorldLine:
 
     def __init__(self, z, t, beta, time=True, space=True, linestyle=SETTINGS["WORLD_LINE"],
                  color=SETTINGS["WORLD_LINE_COLOR"]):
+        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+
+        self.time = None
+        self.space = None
+
+        r = np.linspace(- outer_corner, outer_corner, 100)
+
+        label = fr"$\beta =$ {beta}" if t != 0.0 or z != 0.0 else fr"$\beta =$ {beta}, z: {z}, t: {t}"
+
+        if time:
+            self.time = plt.Line2D(beta * (r - t) + z, r, color=color, linestyle=linestyle, label=label)
+
+            if space:
+                self.space = plt.Line2D(r, beta * (r - z) + t, color=color, linestyle=linestyle)
+
+        elif space:
+            self.space = plt.Line2D(r, beta * (r - z) + t, color=color, linestyle=linestyle, label=label)
+
         self.beta = beta
         self.z = z
         self.t = t
-        self.time = time
-        self.space = space
-        self.linestyle = linestyle
-        self.color = color
 
     def __del__(self):
         del self.beta
@@ -204,8 +208,6 @@ class WorldLine:
         del self.t
         del self.time
         del self.space
-        del self.linestyle
-        del self.color
 
 
 class DataPoint:
