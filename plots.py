@@ -171,5 +171,43 @@ plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"time": True}))
 plot.draw("worldline_introduce_line")
 
 plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"time": True}))
+plot.draw("worldline_time")
+
+plot = Diagram()
 plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"time": True, "time_angle": True}))
 plot.draw("worldline_time_angle")
+
+plot = Diagram()
+plot.add_event(Event(0.0, 0.0, settings={}))
+plot.add_event(Event(1.0, 0.0, settings={}))
+plot.add_event(Event(2.0, 0.0, settings={}))
+plot.add_event(Event(3.0, 0.0, settings={}))
+plot.draw("worldline_space_points")
+
+plot = Diagram()
+plot.add_event(Event(0.0, 0.0, settings={}))
+plot.add_event(Event(1.0, 0.6, settings={}))
+plot.add_event(Event(2.0, 1.2, settings={}))
+plot.add_event(Event(3.0, 1.8, settings={}))
+plot.draw("worldline_space_points_on_line")
+
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"space": True}))
+plot.draw("worldline_introduce_line_space")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"space": True, "space_angle": True}))
+plot.draw("worldline_space_angle")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={"space": True, "time": True}))
+plot.draw("worldline_all")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "space_angle": True,
+    "time_angle": True
+}))
+plot.draw("worldline_all_angle")
