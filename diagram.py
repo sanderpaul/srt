@@ -1,5 +1,6 @@
 import copy
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 from settings import *
 
@@ -80,13 +81,17 @@ class WorldLine(Line):
         elif "space" in settings.keys() and settings["space"]:
             self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle, label=label)
 
-        if "time_angle" in settings.keys() and settings["time_angle"]:
-            # ToDo
-            pass
+        if "time_angle" in settings.keys() and settings["time_angle"] and abs(beta) > 1e-3:
+            self.angles.append(patches.Arc(
+                xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=np.arctan(1 / beta) * 180 / np.pi,
+                theta2=90, color=color)
+            )
 
-        if "space_angle" in settings.keys() and settings["space_angle"]:
-            # ToDo
-            pass
+        if "space_angle" in settings.keys() and settings["space_angle"] and abs(beta) > 1e-3:
+            self.angles.append(patches.Arc(
+                xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=0,
+                theta2=np.arctan(beta) * 180 / np.pi, color=color)
+            )
 
 
 class Difference:
@@ -100,19 +105,35 @@ class Difference:
                 [first.z, second.z], [first.t, second.t], color=color, linestyle=linestyle))
             return
 
-        zT, tT, zS, tS = connect(first, second, beta)  # Intersection with Space Axis
+        intersections = connect(first, second, beta)  # Intersection with Space Axis
 
         if "t_first" in settings.keys() and settings["t_first"]:
-            self.lines.append(plt.Line2D([zT, first.z], [tT, first.t], color=color, linestyle=linestyle))
+            self.lines.append(plt.Line2D(
+                [intersections["time_space"].z, first.z],
+                [intersections["time_space"].t, first.t],
+                color=color, linestyle=linestyle)
+            )
 
         if "t_second" in settings.keys() and settings["t_second"]:
-            self.lines.append(plt.Line2D([zT, second.z], [tT, second.t], color=color, linestyle=linestyle))
+            self.lines.append(plt.Line2D(
+                [intersections["time_space"].z, second.z],
+                [intersections["time_space"].t, second.t],
+                color=color, linestyle=linestyle)
+            )
 
         if "z_first" in settings.keys() and settings["z_first"]:
-            self.lines.append(plt.Line2D([zS, first.z], [tS, first.t], color=color, linestyle=linestyle))
+            self.lines.append(plt.Line2D(
+                [intersections["space_time"].z, first.z],
+                [intersections["space_time"].t, first.t],
+                color=color, linestyle=linestyle)
+            )
 
         if "z_second" in settings.keys() and settings["z_second"]:
-            self.lines.append(plt.Line2D([zS, second.z], [tS, second.t], color=color, linestyle=linestyle))
+            self.lines.append(plt.Line2D(
+                [intersections["space_time"].z, second.z],
+                [intersections["space_time"].t, second.t],
+                color=color, linestyle=linestyle)
+            )
 
 
 class Diagram:
@@ -120,6 +141,7 @@ class Diagram:
     def __init__(self):
         self._lines = []
         self._events = []
+        self._patches = []
 
         self.figure = None
         self.axes = None
@@ -134,6 +156,8 @@ class Diagram:
             self._lines.append(world_line.time)
         if world_line.space is not None:
             self._lines.append(world_line.space)
+        for angle in world_line.angles:
+            self._patches.append(angle)
 
         return self
 
@@ -206,6 +230,9 @@ class Diagram:
         for line in self._lines:
             ax.add_line(copy.deepcopy(line))
 
+        for patch in self._patches:
+            ax.add_patch(patch)
+
         for i, event in enumerate(self._events):
             ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
                     linestyle="None",
@@ -235,13 +262,10 @@ class Diagram:
 
 
 def connect(first: Point, second: Point, beta):
-    zT = (beta * (second.t - first.t) - beta ** 2 * second.z + first.z) / (1 - beta ** 2)
-    tT = beta * (zT - second.z) + second.t
-
-    zS = (beta * (first.t - second.t) - beta ** 2 * first.z + second.z) / (1 - beta ** 2)
-    tS = beta * (zS - first.z) + first.t
-
-    return round(zT, 2), round(tT, 2), round(zS, 2), round(tS, 2)
+    return intersect(Line(first, beta), Line(second, beta), settings={
+        "time_space": True,
+        "space_time": True
+    })
 
 
 def intersect(first: Line, second: Line, settings: dict):
@@ -268,7 +292,7 @@ def intersect(first: Line, second: Line, settings: dict):
             result["time_time"] = intersection(p1=first.origin, m1=1 / first.beta,
                                                p2=second.origin, m2=1 / second.beta)
 
-    if "time_space" in settings.keys() and settings["time_time"]:
+    if "time_space" in settings.keys() and settings["time_space"]:
         if abs(first.beta) < 1e-3:
             result["time_space"] = Point(
                 first.origin.z, second.beta * (first.origin.z - second.origin.z) + second.origin.t
@@ -277,7 +301,7 @@ def intersect(first: Line, second: Line, settings: dict):
             result["time_space"] = intersection(p1=first.origin, m1=1 / first.beta,
                                                 p2=second.origin, m2=second.beta)
 
-    if "space_time" in settings.keys() and settings["time_time"]:
+    if "space_time" in settings.keys() and settings["space_time"]:
         if abs(second.beta) < 1e-3:
             result["space_time"] = Point(
                 second.origin.z, first.beta * (second.origin.z - first.origin.z) + first.origin.t
@@ -286,7 +310,7 @@ def intersect(first: Line, second: Line, settings: dict):
             result["space_time"] = intersection(p1=first.origin, m1=first.beta,
                                                 p2=second.origin, m2=1 / second.beta)
 
-    if "space_space" in settings.keys() and settings["time_time"]:
+    if "space_space" in settings.keys() and settings["space_space"]:
         result["space_space"] = intersection(p1=first.origin, m1=first.beta,
                                              p2=second.origin, m2=second.beta)
 
