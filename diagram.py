@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from lineticks import LineTicks
+import deps.lineticks as lineticks
 from settings import *
 
 
@@ -61,7 +61,9 @@ class WorldLine(Line):
                  color=SETTINGS["WORLD_LINE_COLOR"]):
         super().__init__(origin, beta)
 
+        self.gamma = 1 / np.sqrt(1 - beta ** 2)
         self.angles = []
+        self.ticks = []
         self.time = None
         self.space = None
 
@@ -76,23 +78,63 @@ class WorldLine(Line):
         if "time" in settings.keys() and settings["time"]:
             self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
 
-            if "space" in settings.keys() and settings["space"]:
+            if "time_angle" in settings.keys() and settings["time_angle"] and abs(beta) > 1e-3:
+                self.angles.append(patches.Arc(
+                    xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=np.arctan(1 / beta) * 180 / np.pi,
+                    theta2=90, color=color)
+                )
+
+            if "time_ticks" in settings.keys() and settings["time_ticks"]:
+                n_ticks = 4 * outer_corner + 1
+                dz = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
+                dt = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
+
+                r = np.linspace(- 2 * outer_corner, 2 * outer_corner, n_ticks, endpoint=True)
+                t = origin.t + r * self.gamma
+                z = origin.z + r * self.beta * self.gamma
+
+                if abs(beta) < 1e-3:
+                    self.time = plt.Line2D(z, t, color=color, label=label)
+                else:
+                    self.time = plt.Line2D(z, t, color=color, label=label)
+
+                for z_i, t_i in zip(z, t):
+                    self.ticks.append(plt.Line2D(
+                        [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
+                    ))
+
+        if "space" in settings.keys() and settings["space"]:
+            if "time" in settings.keys() and settings["time"]:
                 self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle)
+            else:
+                self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle,
+                                        label=label)
 
-        elif "space" in settings.keys() and settings["space"]:
-            self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle, label=label)
+            if "space_angle" in settings.keys() and settings["space_angle"] and abs(beta) > 1e-3:
+                self.angles.append(patches.Arc(
+                    xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=0,
+                    theta2=np.arctan(beta) * 180 / np.pi, color=color
+                ))
 
-        if "time_angle" in settings.keys() and settings["time_angle"] and abs(beta) > 1e-3:
-            self.angles.append(patches.Arc(
-                xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=np.arctan(1 / beta) * 180 / np.pi,
-                theta2=90, color=color)
-            )
+            if "space_ticks" in settings.keys() and settings["space_ticks"]:
+                self.space = None
+                n_ticks = 4 * outer_corner + 1
+                dz = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
+                dt = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
 
-        if "space_angle" in settings.keys() and settings["space_angle"] and abs(beta) > 1e-3:
-            self.angles.append(patches.Arc(
-                xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=0,
-                theta2=np.arctan(beta) * 180 / np.pi, color=color)
-            )
+                r = np.linspace(- 2 * outer_corner, 2 * outer_corner, n_ticks, endpoint=True)
+                t = origin.t + r * self.beta * self.gamma
+                z = origin.z + r * self.gamma
+
+                if "time" in settings.keys() and settings["time"]:
+                    self.space = plt.Line2D(z, t, color=color)
+                else:
+                    self.space = plt.Line2D(z, t, color=color, label=label)
+
+                for z_i, t_i in zip(z, t):
+                    self.ticks.append(plt.Line2D(
+                        [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
+                    ))
 
 
 class Difference:
@@ -159,6 +201,8 @@ class Diagram:
             self._lines.append(world_line.space)
         for angle in world_line.angles:
             self._patches.append(angle)
+        for tick in world_line.ticks:
+            self._lines.append(tick)
 
         return self
 
@@ -200,6 +244,19 @@ class Diagram:
             ax.plot([0, 0], [-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], color=SETTINGS["AXIS_COLOR"])
             ax.set_xlabel(SETTINGS["X_AXIS_LABEL"])
             ax.set_ylabel(SETTINGS["Y_AXIS_LABEL"])
+
+            if SETTINGS["AXIS_TICK"]:
+                outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+
+                for i in range(-outer_corner, outer_corner + 1):
+                    ax.plot([i, i], [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
+                            color=SETTINGS["AXIS_COLOR"]
+                            )
+                    ax.plot([-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]], [i, i],
+                            color=SETTINGS["AXIS_COLOR"]
+                            )
+
+
 
         if SETTINGS["LIGHT"]:
             corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])

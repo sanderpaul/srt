@@ -8,9 +8,11 @@ SETTINGS = {
     "TITLE": "Minkowski Space",
 
     "AXIS": True,
+    "AXIS_TICK": True,
     "AXIS_COLOR": "black",
     "X_AXIS_LABEL": "Space [z]",
     "Y_AXIS_LABEL": "Time [ct]",
+    "TICK_LENGTH": 0.05,
 
     "GRID": True,
     "LEGEND": True,

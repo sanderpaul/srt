@@ -40,18 +40,13 @@ first = Event(1, 2, settings={
 })
 
 plot = Diagram()
-plot.add_event(Event(1, 2, settings={
-    "t_first": True,
-    "t_second": True,
-    "z_first": True,
-    "z_second": True
-}))
-plot.add_event(Event(3, 1, settings={
-    "t_first": False,
-    "t_second": False,
-    "z_first": False,
-    "z_second": False
-}))
+plot.add_event(Event(1, 2, settings={}))
+plot.add_event(Event(3, 1, settings={}))
+plot.draw("two_points_no_lines")
+
+plot = Diagram()
+plot.add_event(first)
+plot.add_event(Event(3, 1, settings={}))
 plot.draw("two_points_one_line")
 
 plot = Diagram()
@@ -72,6 +67,7 @@ plot.add_event(Event(3, 1, settings={
     "z_first": True,
     "z_second": True
 }))
+plot.draw("two_points_full_lines")
 
 second = Event(3, 1, settings={
     "t_first": True,
@@ -211,3 +207,12 @@ plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
     "time_angle": True
 }))
 plot.draw("worldline_all_angle")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.draw("worldline_all_angle_ticks")
