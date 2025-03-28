@@ -10,6 +10,9 @@ class Point:
         self.z = z
         self.t = t
 
+    def __str__(self):
+        return "Point(z=%f, t=%f)" % (self.z, self.t)
+
 
 class Event(Point):
 
@@ -38,32 +41,52 @@ class Event(Point):
         return Point(self.z, self.t)
 
 
-class WorldLine:
+class Line():
+
+    def __init__(self, origin: Point, beta):
+        if beta > 1:
+            raise ValueError("beta must be <= 1")
+        if beta < 0:
+            raise ValueError("beta must be >= 0")
+
+        self.origin = origin
+        self.beta = beta
+
+
+class WorldLine(Line):
 
     def __init__(self, origin: Point, beta, settings: dict, linestyle=SETTINGS["WORLD_LINE"],
                  color=SETTINGS["WORLD_LINE_COLOR"]):
+        super().__init__(origin, beta)
 
-        self.beta = beta
-        self.origin = origin
-        self.lines = []
+        self.angles = []
+        self.time = None
+        self.space = None
 
         outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
 
         r = np.linspace(- outer_corner, outer_corner, 2)
 
-        label = fr"$\beta =$ {beta}" if (float(origin.t) != 0.0 or float(
-            origin.z) != 0.0) else fr"$\beta =$ {beta}, z: {origin.z}, t: {origin.t}"
+        label = fr"$\beta =$ {beta}" if (
+                abs(origin.t) < 1e-3 or abs(origin.z) < 1e-3
+        ) else fr"$\beta =$ {beta}, z: {origin.z}, t: {origin.t}"
 
         if "time" in settings.keys() and settings["time"]:
-            self.lines.append(plt.Line2D(beta * (r - origin.t) + origin.z, r,
-                                         color=color, linestyle=linestyle, label=label))
+            self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
 
             if "space" in settings.keys() and settings["space"]:
-                self.lines.append(plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle))
+                self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle)
 
         elif "space" in settings.keys() and settings["space"]:
-            self.lines.append(
-                plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle, label=label))
+            self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle, label=label)
+
+        if "time_angle" in settings.keys() and settings["time_angle"]:
+            # ToDo
+            pass
+
+        if "space_angle" in settings.keys() and settings["space_angle"]:
+            # ToDo
+            pass
 
 
 class Difference:
@@ -73,11 +96,11 @@ class Difference:
         self.lines = []
 
         if "direct" in settings.keys() and settings["direct"]:
-            self.lines.append(plt.Line2D([first.z, second.z], [first.t, second.t], color=color, linestyle=linestyle))
+            self.lines.append(plt.Line2D(
+                [first.z, second.z], [first.t, second.t], color=color, linestyle=linestyle))
             return
 
-        zT, tT = intersect(first, second, beta)  # Intersection with Time Axis
-        zS, tS = intersect(second, first, beta)  # Intersection with Space Axis
+        zT, tT, zS, tS = connect(first, second, beta)  # Intersection with Space Axis
 
         if "t_first" in settings.keys() and settings["t_first"]:
             self.lines.append(plt.Line2D([zT, first.z], [tT, first.t], color=color, linestyle=linestyle))
@@ -107,8 +130,10 @@ class Diagram:
         del self.figure
 
     def add_world_line(self, world_line: WorldLine):
-        for line in world_line.lines:
-            self._lines.append(line)
+        if world_line.time is not None:
+            self._lines.append(world_line.time)
+        if world_line.space is not None:
+            self._lines.append(world_line.space)
 
         return self
 
@@ -123,6 +148,8 @@ class Diagram:
     def add_difference(self, difference: Difference):
         for diff in difference.lines:
             self._lines.append(diff)
+
+        return self
 
     def draw(self, plot_name):
         if self.figure is None:
@@ -207,8 +234,60 @@ class Diagram:
         self.axes = ax
 
 
-def intersect(first: Point, second: Point, beta):
-    z = (beta * (second.t - first.t) - beta ** 2 * second.z + first.z) / (1 - beta ** 2)
-    t = beta * (z - second.z) + second.t
+def connect(first: Point, second: Point, beta):
+    zT = (beta * (second.t - first.t) - beta ** 2 * second.z + first.z) / (1 - beta ** 2)
+    tT = beta * (zT - second.z) + second.t
 
-    return round(z, 2), round(t, 2)
+    zS = (beta * (first.t - second.t) - beta ** 2 * first.z + second.z) / (1 - beta ** 2)
+    tS = beta * (zS - first.z) + first.t
+
+    return round(zT, 2), round(tT, 2), round(zS, 2), round(tS, 2)
+
+
+def intersect(first: Line, second: Line, settings: dict):
+    result = {}
+
+    def intersection(p1: Point, m1: float, p2: Point, m2: float):
+        z = (p2.t - p1.t + m1 * p1.z - m2 * p2.z) / (m1 - m2)
+        t = m1 * (z - p1.z) + p1.t
+
+        return Point(z, t)
+
+    if "time_time" in settings.keys() and settings["time_time"]:
+        if abs(first.beta - second.beta) < 1e-3:
+            raise ValueError("The two lines share the same slope. They have no or infinite intersections.")
+        elif abs(first.beta) < 1e-3:
+            result["time_time"] = Point(
+                first.origin.z, (first.origin.z - second.origin.z) / second.beta + second.origin.t
+            )
+        elif abs(second.beta) < 1e-3:
+            result["time_time"] = Point(
+                second.origin.z, (second.origin.z - first.origin.z) / first.beta + first.origin.t
+            )
+        else:
+            result["time_time"] = intersection(p1=first.origin, m1=1 / first.beta,
+                                               p2=second.origin, m2=1 / second.beta)
+
+    if "time_space" in settings.keys() and settings["time_time"]:
+        if abs(first.beta) < 1e-3:
+            result["time_space"] = Point(
+                first.origin.z, second.beta * (first.origin.z - second.origin.z) + second.origin.t
+            )
+        else:
+            result["time_space"] = intersection(p1=first.origin, m1=1 / first.beta,
+                                                p2=second.origin, m2=second.beta)
+
+    if "space_time" in settings.keys() and settings["time_time"]:
+        if abs(second.beta) < 1e-3:
+            result["space_time"] = Point(
+                second.origin.z, first.beta * (second.origin.z - first.origin.z) + first.origin.t
+            )
+        else:
+            result["space_time"] = intersection(p1=first.origin, m1=first.beta,
+                                                p2=second.origin, m2=1 / second.beta)
+
+    if "space_space" in settings.keys() and settings["time_time"]:
+        result["space_space"] = intersection(p1=first.origin, m1=first.beta,
+                                             p2=second.origin, m2=second.beta)
+
+    return result

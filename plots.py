@@ -1,6 +1,19 @@
 from diagram import *
 from settings import *
 
+first = Line(Point(0, 0), 0)
+second = Line(Point(2, 3), 0.2)
+
+test = intersect(first, second, settings={
+    "time_time": True,
+    "time_space": True,
+    "space_time": True,
+    "space_space": True,
+})
+
+for key in test:
+    print(test[key])
+
 # First image: only showing the axis
 SETTINGS["LIGHT"] = False
 plot = Diagram()
