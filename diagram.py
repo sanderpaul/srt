@@ -23,14 +23,9 @@ class Event(Point):
         self.settings = settings
         self.secondary_coordinates = None
 
-        if world_line is not None:
-            beta = world_line.beta
-            gamma = 1 / np.sqrt(1 - beta ** 2)
-
-            self.secondary_coordinates = Point(
-                gamma * (z - beta * t) - world_line.origin.z,
-                gamma * (t - beta * z) - world_line.origin.t
-            )
+        if ("use_world_line_as_default" in settings.keys() and
+                settings["use_world_line_as_default"]
+                and world_line is not None):
 
             self.lines.extend(
                 Difference(first=self, second=world_line.origin, settings=settings,
@@ -45,6 +40,15 @@ class Event(Point):
                            beta=0.0, color=SETTINGS["DATA_COLOR"],
                            linestyle=SETTINGS["DATA_LINE"]
                            ).lines
+            )
+
+        if world_line is not None:
+            beta = world_line.beta
+            gamma = 1 / np.sqrt(1 - beta ** 2)
+
+            self.secondary_coordinates = Point(
+                gamma * (z - beta * t) - world_line.origin.z,
+                gamma * (t - beta * z) - world_line.origin.t
             )
 
     def to_point(self):
@@ -301,13 +305,13 @@ class Diagram:
                         marker=SETTINGS["DATA_MARKER"],
                         color=SETTINGS["DATA_COLOR"],
                         linestyle="None",
-                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " +
+                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $ct_{i + 1}$: " +
                               str(event.t) + rf" || $z_{i + 1}'$: " + str(event.secondary_coordinates.z) +
-                              rf", $t_{i + 1}'$: " + str(event.secondary_coordinates.t))
+                              rf", $ct_{i + 1}'$: " + str(event.secondary_coordinates.t))
             else:
                 ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
                         linestyle="None",
-                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " + str(event.t))
+                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $ct_{i + 1}$: " + str(event.t))
 
             if "future" in event.settings.keys() and event.settings["future"]:
                 ax.fill_between(
