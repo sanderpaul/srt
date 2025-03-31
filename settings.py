@@ -20,9 +20,11 @@ SETTINGS = {
     "LIGHT": True,
     "LIGHT_COLOR": "gray",
     "LIGHT_ALPHA": 0.5,
+
     "SPACE_LIKE": False,
     "SPACE_COLOR": "C2",
     "SPACE_ALPHA": 0.2,
+
     "TIME_LIKE": False,
     "TIME_COLOR": "C0",
     "TIME_ALPHA": 0.2,

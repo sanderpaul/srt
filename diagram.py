@@ -238,6 +238,7 @@ class Diagram:
 
     def prepare(self):
         figure = plt.figure(figsize=(SETTINGS["FIG_WIDTH"], SETTINGS["FIG_HEIGHT"]))
+        figure.text(0.57, 0.12, "Paul Sander, ETH Zürich", fontsize=15, color="gray", alpha=0.2)
         ax = figure.add_subplot(111)
 
         ax.set_title(SETTINGS["TITLE"])
