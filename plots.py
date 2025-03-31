@@ -1,3 +1,4 @@
+import settings
 from diagram import *
 from settings import *
 
@@ -299,3 +300,83 @@ plot.add_event(Event(3, 3, settings={
     "z_second": True
 }, world_line=Line(Point(0, 0), beta=0.6)))
 plot.draw("point_read_moving_lines")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(1.5, 2.5, settings={}))
+plot.draw("dilatation_first_point")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(1.5, 2.5, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}))
+plot.draw("dilatation_first_rest_frame")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(1.5, 2.5, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}, world_line=Line(Point(0, 0), beta=0.6)))
+plot.draw("dilatation_first_moving_frame")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(0, 2, settings={}))
+plot.draw("dilatation_second_point")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(0, 2, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}))
+plot.draw("dilatation_second_rest_frame")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(0, 2, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}, world_line=Line(Point(0, 0), beta=0.6)))
+plot.draw("dilatation_second_moving_frame")
