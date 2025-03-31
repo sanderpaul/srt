@@ -216,3 +216,31 @@ plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
     "space_ticks": True
 }))
 plot.draw("worldline_all_angle_ticks")
+
+list = [-0.99, -0.95, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, -0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
+        0.8, 0.9, 0.95, 0.99]
+
+for i, value in enumerate(list):
+    plot = Diagram()
+    plot.add_world_line(WorldLine(Point(0, 0), beta=value, settings={"time": True, "space": True}))
+    plot.draw(f"gif/beta_{i}")
+
+plot = Diagram()
+plot.add_event(Event(0.75, 1.25, settings={}))
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": False,
+    "space_ticks": False
+}))
+plot.draw("worldline_one_point_on_line")
+
+plot = Diagram()
+plot.add_event(Event(0.75, 1.25, settings={}))
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.draw("worldline_one_point_on_scale")

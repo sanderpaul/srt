@@ -2,7 +2,6 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import deps.lineticks as lineticks
 from settings import *
 
 
@@ -46,10 +45,8 @@ class Event(Point):
 class Line():
 
     def __init__(self, origin: Point, beta):
-        if beta > 1:
-            raise ValueError("beta must be <= 1")
-        if beta < 0:
-            raise ValueError("beta must be >= 0")
+        if abs(beta) > 1:
+            raise ValueError("beta must be in [-1, 1]")
 
         self.origin = origin
         self.beta = beta
@@ -231,7 +228,6 @@ class Diagram:
         self.figure = None
 
     def prepare(self):
-
         figure = plt.figure(figsize=(SETTINGS["FIG_WIDTH"], SETTINGS["FIG_HEIGHT"]))
         ax = figure.add_subplot(111)
 
@@ -255,8 +251,6 @@ class Diagram:
                     ax.plot([-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]], [i, i],
                             color=SETTINGS["AXIS_COLOR"]
                             )
-
-
 
         if SETTINGS["LIGHT"]:
             corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
@@ -318,6 +312,15 @@ class Diagram:
         self.figure = figure
         self.axes = ax
 
+    def get_axes(self):
+        return self.axes
+
+    def get_figure(self):
+        return self.figure
+
+    def clear_axes(self):
+        self.axes = None
+        self.figure.axes = []
 
 def connect(first: Point, second: Point, beta):
     return intersect(Line(first, beta), Line(second, beta), settings={
