@@ -8,8 +8,8 @@ from settings import *
 class Point:
 
     def __init__(self, z, t):
-        self.z = z
-        self.t = t
+        self.z = np.round(z, 2)
+        self.t = np.round(t, 2)
 
     def __str__(self):
         return "Point(z=%f, t=%f)" % (self.z, self.t)
@@ -21,8 +21,17 @@ class Event(Point):
         super().__init__(z, t)
         self.lines = []
         self.settings = settings
+        self.secondary_coordinates = None
 
         if world_line is not None:
+            beta = world_line.beta
+            gamma = 1 / np.sqrt(1 - beta ** 2)
+
+            self.secondary_coordinates = Point(
+                gamma * (z - beta * t) - world_line.origin.z,
+                gamma * (t - beta * z) - world_line.origin.t
+            )
+
             self.lines.extend(
                 Difference(first=self, second=world_line.origin, settings=settings,
                            beta=world_line.beta, color=SETTINGS["DATA_COLOR"],
@@ -286,9 +295,18 @@ class Diagram:
             ax.add_patch(patch)
 
         for i, event in enumerate(self._events):
-            ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
-                    linestyle="None",
-                    label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " + str(event.t))
+            if event.secondary_coordinates is not None:
+                ax.plot(event.z, event.t,
+                        marker=SETTINGS["DATA_MARKER"],
+                        color=SETTINGS["DATA_COLOR"],
+                        linestyle="None",
+                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " +
+                              str(event.t) + rf" || $z_{i + 1}'$: " + str(event.secondary_coordinates.z) +
+                              rf", $t_{i + 1}'$: " + str(event.secondary_coordinates.t))
+            else:
+                ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
+                        linestyle="None",
+                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $t_{i + 1}$: " + str(event.t))
 
             if "future" in event.settings.keys() and event.settings["future"]:
                 ax.fill_between(
@@ -321,6 +339,7 @@ class Diagram:
     def clear_axes(self):
         self.axes = None
         self.figure.axes = []
+
 
 def connect(first: Point, second: Point, beta):
     return intersect(Line(first, beta), Line(second, beta), settings={

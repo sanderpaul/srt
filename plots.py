@@ -244,3 +244,43 @@ plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
     "space_ticks": True
 }))
 plot.draw("worldline_one_point_on_scale")
+
+plot = Diagram()
+plot.add_event(Event(3, 3, settings={}))
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.draw("point_read_no_lines")
+
+plot = Diagram()
+plot.add_event(Event(3, 3, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}))
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.draw("point_read_basic_lines")
+
+plot = Diagram()
+plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+    "space": True,
+    "time": True,
+    "time_ticks": True,
+    "space_ticks": True
+}))
+plot.add_event(Event(3, 3, settings={
+    "t_first": True,
+    "t_second": True,
+    "z_first": True,
+    "z_second": True
+}, world_line=Line(Point(0, 0), beta=0.6)))
+plot.draw("point_read_moving_lines")
