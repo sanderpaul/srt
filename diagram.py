@@ -55,6 +55,7 @@ class Event(Point):
 
         if "hyperbel" in settings.keys() and settings["hyperbel"]:
             absolute = t ** 2 - z ** 2
+            label = fr"$\Delta s^2$={absolute:.2f}"
             if abs(absolute) < 1e-10:
                 pass
             elif absolute > 0:
@@ -63,13 +64,13 @@ class Event(Point):
                     self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                             label=label)
                                       )
                 else:
                     self.lines.append(Line2D(z, -np.sqrt(absolute + z ** 2),
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                             label=label)
                                       )
             else:
                 t = np.linspace(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], 1000)
@@ -77,13 +78,13 @@ class Event(Point):
                     self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                             label=label)
                                       )
                 else:
                     self.lines.append(Line2D(- np.sqrt(abs(absolute) + t ** 2), t,
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                             label=label)
                                       )
 
     def to_point(self):
@@ -116,9 +117,9 @@ class WorldLine(Line):
 
         r = np.linspace(- outer_corner, outer_corner, 2)
 
-        label = fr"$\beta =$ {beta}" if (
+        label = fr"$\beta =$ {beta:.2f}" if (
                 abs(origin.t) < 1e-3 or abs(origin.z) < 1e-3
-        ) else fr"$\beta =$ {beta}, z: {origin.z}, t: {origin.t}"
+        ) else fr"$\beta =$ {beta:.2f}, z: {origin.z:.2f}, t: {origin.t:.2f}"
 
         if "time" in settings.keys() and settings["time"]:
             self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
@@ -341,13 +342,16 @@ class Diagram:
                         marker=SETTINGS["DATA_MARKER"],
                         color=SETTINGS["DATA_COLOR"],
                         linestyle="None",
-                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $ct_{i + 1}$: " +
-                              str(event.t) + rf" || $z_{i + 1}'$: " + str(event.secondary_coordinates.z) +
-                              rf", $ct_{i + 1}'$: " + str(event.secondary_coordinates.t))
+                        label=(rf"$z_{i + 1}$: {event.z:.2f}, "
+                               rf"$ct_{i + 1}$: {event.t:.2f} || "
+                               rf"$z_{i + 1}'$: {event.secondary_coordinates.z:.2f}, "
+                               rf"$ct_{i + 1}'$: {event.secondary_coordinates.t:.2f}")
+                        )
             else:
                 ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
                         linestyle="None",
-                        label=rf"$z_{i + 1}$: " + str(event.z) + rf", $ct_{i + 1}$: " + str(event.t))
+                        label=rf"$z_{i + 1}$: {event.z:.2f}, $ct_{i + 1}$: {event.t:.2f}"
+                        )
 
             if "future" in event.settings.keys() and event.settings["future"]:
                 ax.fill_between(
@@ -376,7 +380,7 @@ class Diagram:
                                 color=SETTINGS["SPACE_COLOR"])
 
         if len(self._lines) + len(self._events) > 0 and SETTINGS["LEGEND"]:
-            ax.legend()
+            ax.legend(loc=SETTINGS["LEGEND_LOC"])
 
         self.figure = figure
         self.axes = ax

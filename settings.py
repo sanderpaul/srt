@@ -16,6 +16,7 @@ SETTINGS = {
 
     "GRID": True,
     "LEGEND": True,
+    "LEGEND_LOC": "lower left",
 
     "LIGHT": True,
     "LIGHT_COLOR": "gray",
