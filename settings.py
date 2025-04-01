@@ -36,6 +36,9 @@ SETTINGS = {
     "DATA_LINE": "--",
     "DATA_MARKER": "o",
 
+    "HYPERBEL_LINE": ":",
+    "HYPERBEL_COLOR": "C0",
+
     "DIFF_COLOR": "C2",
     "DIFF_LINE": ":"
 }

@@ -2,10 +2,10 @@ import settings
 from diagram import *
 from settings import *
 
-intro = True  # plot basic plots
+intro = False  # plot basic plots
 time_space = True  # plot time and space like vectors
-worldline = True  # plot introduction of worldline
-dil_con = True  # plot time dilation and Lorentz contraction
+world_line = False  # plot introduction of worldline
+dil_con = False  # plot time dilation and Lorentz contraction
 
 if intro:
     SETTINGS["LIGHT"] = False
@@ -117,10 +117,6 @@ if time_space:
     SETTINGS["SPACE_LIKE"] = False
 
     plot = Diagram()
-    plot.add_event(Event(1, 2, settings={}))
-    plot.add_event(Event(3, 1, settings={}))
-
-    plot = Diagram()
     plot.add_event(Event(1, 2, settings={"future": True}))
     plot.add_event(Event(3, 1, settings={"future": True}))
     plot.draw("two_points_future")
@@ -135,7 +131,78 @@ if time_space:
     plot.add_event(Event(3, 1, settings={"future": True, "past": True}))
     plot.draw("two_points_future_past")
 
-if worldline:
+    plot = Diagram()
+    plot.add_event(Event(1, 2, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True
+    }))
+    plot.add_event(Event(3, 1, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True
+    }))
+    plot.draw("two_points_default_frame")
+
+    wl = WorldLine(
+        origin=Point(0.0, 0.0),
+        beta=-0.5,
+        settings={
+            "time": True,
+            "time_ticks": True,
+            "space": True,
+            "space_ticks": True
+        })
+
+    plot = Diagram()
+    plot.add_world_line(wl)
+    plot.add_event(Event(1, 2, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True
+    }, world_line=wl))
+    plot.add_event(Event(3, 1, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True
+    }, world_line=wl))
+    plot.draw("two_points_same_time")
+
+    wl = WorldLine(
+        origin=Point(0.0, 0.0),
+        beta=-0.6,
+        settings={
+            "time": True,
+            "time_ticks": True,
+            "space": True,
+            "space_ticks": True
+        })
+
+    plot = Diagram()
+    plot.add_world_line(wl)
+    plot.add_event(Event(1, 2, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True
+    }, world_line=wl))
+    plot.add_event(Event(3, 1, settings={
+        "t_first": True,
+        "t_second": True,
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True
+    }, world_line=wl))
+    plot.draw("two_points_inverted")
+
+if world_line:
 
     # Sixth image: Introduction of worldlines
     plot = Diagram()
@@ -380,6 +447,43 @@ if dil_con:
     plot.draw("dilatation_second_moving_frame")
 
     plot = Diagram()
+    plot.add_event(Event(1.5, 2.5, settings={
+        "z_first": True,
+        "z_second": True,
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+        "space": True,
+        "time": True,
+        "time_ticks": True,
+        "space_ticks": True
+    }))
+    plot.add_event(Event(0.0, 2.0, settings={
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.draw("dilatation_both")
+
+    plot = Diagram()
+    plot.add_event(Event(1.5, 2.5, settings={
+        "z_first": True,
+        "z_second": True,
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+        "space": True,
+        "time": True,
+        "time_ticks": True,
+        "space_ticks": True
+    }))
+    plot.add_event(Event(0.0, 2.0, settings={
+        "z_first": True,
+        "z_second": True,
+        "use_world_line_as_default": True,
+        "hyperbel": True
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.draw("dilatation_both_hyperbel")
+
+    plot = Diagram()
     plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
         "space": True,
         "time": True,
@@ -470,3 +574,22 @@ if dil_con:
         "use_world_line_as_default": True
     }, world_line=Line(Point(0, 0), beta=0.6)))
     plot.draw("contraction_both")
+
+    plot = Diagram()
+    plot.add_event(Event(2.5, 1.5, settings={
+        "t_first": True,
+        "t_second": True,
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+        "space": True,
+        "time": True,
+        "time_ticks": True,
+        "space_ticks": True
+    }))
+    plot.add_event(Event(2, 0, settings={
+        "t_first": True,
+        "t_second": True,
+        "use_world_line_as_default": True,
+        "hyperbel": True
+    }, world_line=Line(Point(0, 0), beta=0.6)))
+    plot.draw("contraction_both_hyperbel")

@@ -2,6 +2,8 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.lines import Line2D
+
 from settings import *
 
 
@@ -50,6 +52,39 @@ class Event(Point):
                 gamma * (z - beta * t) - world_line.origin.z,
                 gamma * (t - beta * z) - world_line.origin.t
             )
+
+        if "hyperbel" in settings.keys() and settings["hyperbel"]:
+            absolute = t ** 2 - z ** 2
+            if abs(absolute) < 1e-10:
+                pass
+            elif absolute > 0:
+                z = np.linspace(-SETTINGS["WIDTH"], SETTINGS["WIDTH"], 1000)
+                if t > 0:
+                    self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
+                                             color=SETTINGS["HYPERBEL_COLOR"],
+                                             linestyle=SETTINGS["HYPERBEL_LINE"],
+                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                      )
+                else:
+                    self.lines.append(Line2D(z, -np.sqrt(absolute + z ** 2),
+                                             color=SETTINGS["HYPERBEL_COLOR"],
+                                             linestyle=SETTINGS["HYPERBEL_LINE"],
+                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                      )
+            else:
+                t = np.linspace(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], 1000)
+                if z > 0:
+                    self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
+                                             color=SETTINGS["HYPERBEL_COLOR"],
+                                             linestyle=SETTINGS["HYPERBEL_LINE"],
+                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                      )
+                else:
+                    self.lines.append(Line2D(- np.sqrt(abs(absolute) + t ** 2), t,
+                                             color=SETTINGS["HYPERBEL_COLOR"],
+                                             linestyle=SETTINGS["HYPERBEL_LINE"],
+                                             label=fr"$\Delta s^2$={round(absolute, 2)}")
+                                      )
 
     def to_point(self):
         return Point(self.z, self.t)
