@@ -55,7 +55,7 @@ class Event(Point):
 
         if "hyperbel" in settings.keys() and settings["hyperbel"]:
             absolute = t ** 2 - z ** 2
-            label = fr"$\Delta s^2$={absolute:.2f}"
+            label = fr"$\Delta s^2$: {absolute:.2f}"
             if abs(absolute) < 1e-10:
                 pass
             elif absolute > 0:
@@ -117,9 +117,9 @@ class WorldLine(Line):
 
         r = np.linspace(- outer_corner, outer_corner, 2)
 
-        label = fr"$\beta =$ {beta:.2f}" if (
+        label = fr"$\beta$: {beta:.2f}" if (
                 abs(origin.t) < 1e-3 or abs(origin.z) < 1e-3
-        ) else fr"$\beta =$ {beta:.2f}, z: {origin.z:.2f}, t: {origin.t:.2f}"
+        ) else fr"$\beta$: {beta:.2f}, z: {origin.z:.2f}, t: {origin.t:.2f}"
 
         if "time" in settings.keys() and settings["time"]:
             self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
