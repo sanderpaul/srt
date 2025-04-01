@@ -2,10 +2,11 @@ import settings
 from diagram import *
 from settings import *
 
-intro = True  # plot basic plots
-time_space = True  # plot time and space like vectors
-world_line = True  # plot introduction of worldline
-dil_con = True  # plot time dilation and Lorentz contraction
+intro = False  # plot basic plots
+time_space = False  # plot time and space like vectors
+world_line = False  # plot introduction of worldline
+dil_con = False  # plot time dilation and Lorentz contraction
+vel_add = True  # plot velocity addition plot.
 
 if intro:
     SETTINGS["LIGHT"] = False
@@ -695,3 +696,19 @@ if dil_con:
         "hyperbel": True
     }, world_line=Line(Point(0, 0), beta=0.6)))
     plot.draw("contraction_both_hyperbel")
+
+if vel_add:
+    plot = Diagram()
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
+        "space": True,
+        "time": True,
+        "angle_space": True,
+        "angle_time": True,
+    }))
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.8, settings={
+        "space": True,
+        "time": True,
+        "angle_space": True,
+        "angle_time": True,
+    }))
+    plot.draw("two_velocities")
