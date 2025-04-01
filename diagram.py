@@ -125,10 +125,18 @@ class WorldLine(Line):
             self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
 
             if "time_angle" in settings.keys() and settings["time_angle"] and abs(beta) > 1e-3:
-                self.angles.append(patches.Arc(
-                    xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=np.arctan(1 / beta) * 180 / np.pi,
-                    theta2=90, color=color)
-                )
+                if beta > 0:
+                    self.angles.append(patches.Arc(
+                        xy=(origin.z, origin.t), width=3 * beta, height=3 * beta, angle=0,
+                        theta1=np.arctan(1 / beta) * 180 / np.pi,
+                        theta2=90, color=color)
+                    )
+                else:
+                    self.angles.append(patches.Arc(
+                        xy=(origin.z, origin.t), width=-3 * beta, height=-3 * beta, angle=0,
+                        theta1=90,
+                        theta2=90 + np.arctan(-beta) * 180 / np.pi, color=color)
+                    )
 
             if "time_ticks" in settings.keys() and settings["time_ticks"]:
                 n_ticks = 4 * outer_corner + 1
@@ -157,10 +165,17 @@ class WorldLine(Line):
                                         label=label)
 
             if "space_angle" in settings.keys() and settings["space_angle"] and abs(beta) > 1e-3:
-                self.angles.append(patches.Arc(
-                    xy=(origin.z, origin.t), width=2, height=2, angle=0, theta1=0,
-                    theta2=np.arctan(beta) * 180 / np.pi, color=color
-                ))
+                if beta > 0:
+                    self.angles.append(patches.Arc(
+                        xy=(origin.z, origin.t), width=3 * beta, height=3 * beta, angle=0, theta1=0,
+                        theta2=np.arctan(beta) * 180 / np.pi, color=color
+                    ))
+                else:
+                    self.angles.append(patches.Arc(
+                        xy=(origin.z, origin.t), width=-3 * beta, height=-3 * beta, angle=0,
+                        theta1=180 - np.arctan(-beta) * 180 / np.pi,
+                        theta2=180, color=color
+                    ))
 
             if "space_ticks" in settings.keys() and settings["space_ticks"]:
                 self.space = None

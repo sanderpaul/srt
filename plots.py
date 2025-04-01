@@ -2,10 +2,10 @@ import settings
 from diagram import *
 from settings import *
 
-intro = False  # plot basic plots
-time_space = False  # plot time and space like vectors
-world_line = False  # plot introduction of worldline
-dil_con = False  # plot time dilation and Lorentz contraction
+intro = True  # plot basic plots
+time_space = True  # plot time and space like vectors
+world_line = True  # plot introduction of worldline
+dil_con = True  # plot time dilation and Lorentz contraction
 vel_add = True  # plot velocity addition plot.
 
 if intro:
@@ -702,13 +702,28 @@ if vel_add:
     plot.add_world_line(WorldLine(Point(0, 0), beta=0.6, settings={
         "space": True,
         "time": True,
-        "angle_space": True,
-        "angle_time": True,
+        "space_angle": True,
+        "time_angle": True,
     }))
     plot.add_world_line(WorldLine(Point(0, 0), beta=0.8, settings={
         "space": True,
         "time": True,
-        "angle_space": True,
-        "angle_time": True,
-    }))
+        "space_angle": True,
+        "time_angle": True,
+    }, color="C4"))
     plot.draw("two_velocities")
+
+    plot = Diagram()
+    plot.add_world_line(WorldLine(Point(0, 0), beta=-0.6, settings={
+        "space": True,
+        "time": True,
+        "space_angle": True,
+        "time_angle": True,
+    }))
+    plot.add_world_line(WorldLine(Point(0, 0), beta=0.38, settings={
+        "space": True,
+        "time": True,
+        "space_angle": True,
+        "time_angle": True,
+    }, color="C4"))
+    plot.draw("two_velocities_switch")
