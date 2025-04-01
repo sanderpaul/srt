@@ -132,6 +132,11 @@ if time_space:
     plot.draw("two_points_future_past")
 
     plot = Diagram()
+    plot.add_event(Event(1, 2, settings={"independent": True}))
+    plot.add_event(Event(3, 1, settings={"independent": True}))
+    plot.draw("two_points_independent")
+
+    plot = Diagram()
     plot.add_event(Event(1, 2, settings={
         "t_first": True,
         "t_second": True,

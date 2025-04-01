@@ -280,6 +280,9 @@ class Diagram:
         figure.text(0.57, 0.12, "Paul Sander, ETH Zürich", fontsize=15, color="gray", alpha=0.2)
         ax = figure.add_subplot(111)
 
+        inner_corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
+
         ax.set_title(SETTINGS["TITLE"])
         ax.set_xlim(-SETTINGS["WIDTH"], SETTINGS["WIDTH"])
         ax.set_ylim(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"])
@@ -291,8 +294,6 @@ class Diagram:
             ax.set_ylabel(SETTINGS["Y_AXIS_LABEL"])
 
             if SETTINGS["AXIS_TICK"]:
-                outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-
                 for i in range(-outer_corner, outer_corner + 1):
                     ax.plot([i, i], [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
                             color=SETTINGS["AXIS_COLOR"]
@@ -302,27 +303,27 @@ class Diagram:
                             )
 
         if SETTINGS["LIGHT"]:
-            corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-            ax.plot([-corner, corner], [-corner, corner],
+            ax.plot([-inner_corner, inner_corner], [-inner_corner, inner_corner],
                     color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
-            ax.plot([-corner, corner], [corner, -corner],
+            ax.plot([-inner_corner, inner_corner], [inner_corner, -inner_corner],
                     color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
 
             if SETTINGS["SPACE_LIKE"]:
-                ax.fill_between([0, corner, SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
-                                [0, -corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
+                ax.fill_between([0, inner_corner, SETTINGS["WIDTH"]], [0, inner_corner, SETTINGS["WIDTH"]],
+                                [0, -inner_corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
                                 color=SETTINGS["SPACE_COLOR"])
-                ax.fill_between([0, -corner, -SETTINGS["WIDTH"]], [0, corner, SETTINGS["WIDTH"]],
-                                [0, -corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
+                ax.fill_between([0, -inner_corner, -SETTINGS["WIDTH"]], [0, inner_corner, SETTINGS["WIDTH"]],
+                                [0, -inner_corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
                                 color=SETTINGS["SPACE_COLOR"])
 
             if SETTINGS["TIME_LIKE"]:
-                ax.fill_between([-corner, 0, corner], [corner, 0, corner],
+                ax.fill_between([-inner_corner, 0, inner_corner], [inner_corner, 0, inner_corner],
                                 [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
                                 alpha=SETTINGS["TIME_ALPHA"],
                                 color=SETTINGS["TIME_COLOR"])
-                ax.fill_between([-corner, 0, corner],
-                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]], [-corner, 0, -corner],
+                ax.fill_between([-inner_corner, 0, inner_corner],
+                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
+                                [-inner_corner, 0, -inner_corner],
                                 alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
 
         if SETTINGS["GRID"]:
@@ -363,6 +364,16 @@ class Diagram:
                     [-SETTINGS["WIDTH"] - event.z + event.t, event.t, -SETTINGS["WIDTH"] + event.z + event.t],
                     alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
                 )
+
+            if "independent" in event.settings.keys() and event.settings["independent"]:
+                ax.fill_between([-outer_corner, event.z], [-outer_corner - event.z + event.t, event.t],
+                                [outer_corner + event.t + event.z, event.t],
+                                alpha=SETTINGS["SPACE_ALPHA"],
+                                color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between([outer_corner, event.z], [-outer_corner + event.z + event.t, event.t],
+                                [outer_corner + event.t - event.z, event.t],
+                                alpha=SETTINGS["SPACE_ALPHA"],
+                                color=SETTINGS["SPACE_COLOR"])
 
         if len(self._lines) + len(self._events) > 0 and SETTINGS["LEGEND"]:
             ax.legend()
