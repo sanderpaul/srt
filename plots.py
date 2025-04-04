@@ -2,11 +2,11 @@ import settings
 from diagram import *
 from settings import *
 
-intro = True  # plot basic plots
-time_space = True  # plot time and space like vectors
-world_line = True  # plot introduction of worldline
-dil_con = True  # plot time dilation and Lorentz contraction
-vel_add = True  # plot velocity addition plot.
+intro = False  # plot basic plots
+time_space = False  # plot time and space like vectors
+world_line = False  # plot introduction of worldline
+dil_con = False  # plot time dilation and Lorentz contraction
+vel_add = False  # plot velocity addition plot.
 
 if intro:
     SETTINGS["LIGHT"] = False

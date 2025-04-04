@@ -19,18 +19,18 @@ class Point:
 
 class Event(Point):
 
-    def __init__(self, z, t, settings: dict, world_line=None):
+    def __init__(self, z: float, t: float, settings: dict, world_line=None):
         super().__init__(z, t)
         self.lines = []
         self.settings = settings
         self.secondary_coordinates = None
 
-        if ("use_world_line_as_default" in settings.keys() and
-                settings["use_world_line_as_default"]
+        if ("use_world_line_as_default" in self.settings.keys() and
+                self.settings["use_world_line_as_default"]
                 and world_line is not None):
 
             self.lines.extend(
-                Difference(first=self, second=world_line.origin, settings=settings,
+                Difference(first=self, second=world_line.origin, settings=self.settings,
                            beta=world_line.beta, color=SETTINGS["DATA_COLOR"],
                            linestyle=SETTINGS["DATA_LINE"]
                            ).lines
@@ -38,29 +38,25 @@ class Event(Point):
 
         else:
             self.lines.extend(
-                Difference(first=self, second=Point(0, 0), settings=settings,
+                Difference(first=self, second=Point(0, 0), settings=self.settings,
                            beta=0.0, color=SETTINGS["DATA_COLOR"],
                            linestyle=SETTINGS["DATA_LINE"]
                            ).lines
             )
 
         if world_line is not None:
-            beta = world_line.beta
-            gamma = 1 / np.sqrt(1 - beta ** 2)
-
-            self.secondary_coordinates = Point(
-                gamma * (z - beta * t) - world_line.origin.z,
-                gamma * (t - beta * z) - world_line.origin.t
+            self.secondary_coordinates = convert(
+                first=self.to_point(), input=Line(Point(0, 0), beta=0), output=world_line.to_line()
             )
 
-        if "hyperbel" in settings.keys() and settings["hyperbel"]:
-            absolute = t ** 2 - z ** 2
+        if "hyperbel" in self.settings.keys() and self.settings["hyperbel"]:
+            absolute = self.t ** 2 - self.z ** 2
             label = fr"$\Delta s^2$: {absolute:.2f}"
             if abs(absolute) < 1e-10:
                 pass
             elif absolute > 0:
                 z = np.linspace(-SETTINGS["WIDTH"], SETTINGS["WIDTH"], 1000)
-                if t > 0:
+                if self.t > 0:
                     self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
@@ -74,7 +70,7 @@ class Event(Point):
                                       )
             else:
                 t = np.linspace(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], 1000)
-                if z > 0:
+                if self.z > 0:
                     self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
                                              color=SETTINGS["HYPERBEL_COLOR"],
                                              linestyle=SETTINGS["HYPERBEL_LINE"],
@@ -196,6 +192,9 @@ class WorldLine(Line):
                     self.ticks.append(plt.Line2D(
                         [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
                     ))
+
+    def to_line(self):
+        return Line(self.origin, self.beta)
 
 
 class Difference:
@@ -411,11 +410,39 @@ class Diagram:
         self.figure.axes = []
 
 
+def lorentz(point: Point, beta):
+    if beta == 0:
+        return point
+
+    beta = beta
+    gamma = 1 / np.sqrt(1 - beta ** 2)
+
+    return Point(
+        gamma * (point.z - beta * point.t),
+        gamma * (point.t - beta * point.z)
+    )
+
+
 def connect(first: Point, second: Point, beta):
     return intersect(Line(first, beta), Line(second, beta), settings={
         "time_space": True,
         "space_time": True
     })
+
+
+def convert(first: Point, input: Line, output=None):
+    # Transform to the rest frame
+    rest = lorentz(first, -input.beta)
+    rest.z += input.origin.z
+    rest.t += input.origin.t
+
+    if output is not None and type(output) is Line:
+        rest.z -= output.origin.z
+        rest.t -= output.origin.t
+
+        return lorentz(rest, output.beta)
+    else:
+        return rest
 
 
 def intersect(first: Line, second: Line, settings: dict):
