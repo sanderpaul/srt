@@ -2,8 +2,12 @@ SETTINGS = {
     "FIG_HEIGHT": 8,
     "FIG_WIDTH": 8,
 
-    "HEIGHT": 5,
-    "WIDTH": 5,
+    "CORNER": 5,
+
+    "UP": 5,
+    "DOWN": 5,
+    "LEFT": 5,
+    "RIGHT": 5,
 
     "TITLE": "Minkowski Space",
 

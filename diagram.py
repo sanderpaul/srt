@@ -6,15 +6,17 @@ from matplotlib.lines import Line2D
 
 from settings import *
 
-
 class Point:
 
     def __init__(self, z, t):
-        self.z = np.round(z, 2)
-        self.t = np.round(t, 2)
+        self.z = z
+        self.t = t
 
     def __str__(self):
         return "Point(z=%f, t=%f)" % (self.z, self.t)
+
+    def to_point(self):
+        return self
 
 
 class Event(Point):
@@ -55,7 +57,7 @@ class Event(Point):
             if abs(absolute) < 1e-10:
                 pass
             elif absolute > 0:
-                z = np.linspace(-SETTINGS["WIDTH"], SETTINGS["WIDTH"], 1000)
+                z = np.linspace(SETTINGS["LEFT"], SETTINGS["RIGHT"], 1000)
                 if self.t > 0:
                     self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
                                              color=SETTINGS["HYPERBEL_COLOR"],
@@ -69,7 +71,7 @@ class Event(Point):
                                              label=label)
                                       )
             else:
-                t = np.linspace(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], 1000)
+                t = np.linspace(-SETTINGS["DOWN"], SETTINGS["UP"], 1000)
                 if self.z > 0:
                     self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
                                              color=SETTINGS["HYPERBEL_COLOR"],
@@ -96,6 +98,9 @@ class Line():
         self.origin = origin
         self.beta = beta
 
+    def to_line(self):
+        return self
+
 
 class WorldLine(Line):
 
@@ -109,9 +114,7 @@ class WorldLine(Line):
         self.time = None
         self.space = None
 
-        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-
-        r = np.linspace(- outer_corner, outer_corner, 2)
+        r = np.linspace(- SETTINGS["CORNER"], SETTINGS["CORNER"], 2)
 
         label = fr"$\beta$: {beta:.2f}" if (
                 abs(origin.t) < 1e-3 or abs(origin.z) < 1e-3
@@ -135,11 +138,11 @@ class WorldLine(Line):
                     )
 
             if "time_ticks" in settings.keys() and settings["time_ticks"]:
-                n_ticks = 4 * outer_corner + 1
+                n_ticks = 4 * SETTINGS["CORNER"] + 1
                 dz = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
                 dt = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
 
-                r = np.linspace(- 2 * outer_corner, 2 * outer_corner, n_ticks, endpoint=True)
+                r = np.linspace(- 2 * SETTINGS["CORNER"], 2 * SETTINGS["CORNER"], n_ticks, endpoint=True)
                 t = origin.t + r * self.gamma
                 z = origin.z + r * self.beta * self.gamma
 
@@ -175,11 +178,11 @@ class WorldLine(Line):
 
             if "space_ticks" in settings.keys() and settings["space_ticks"]:
                 self.space = None
-                n_ticks = 4 * outer_corner + 1
+                n_ticks = 4 * SETTINGS["CORNER"] + 1
                 dz = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
                 dt = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
 
-                r = np.linspace(- 2 * outer_corner, 2 * outer_corner, n_ticks, endpoint=True)
+                r = np.linspace(- 2 * SETTINGS["CORNER"], 2 * SETTINGS["CORNER"], n_ticks, endpoint=True)
                 t = origin.t + r * self.beta * self.gamma
                 z = origin.z + r * self.gamma
 
@@ -295,21 +298,18 @@ class Diagram:
         figure.text(0.57, 0.12, "Paul Sander, ETH Zürich", fontsize=15, color="gray", alpha=0.2)
         ax = figure.add_subplot(111)
 
-        inner_corner = min(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-        outer_corner = max(SETTINGS["WIDTH"], SETTINGS["HEIGHT"])
-
         ax.set_title(SETTINGS["TITLE"])
-        ax.set_xlim(-SETTINGS["WIDTH"], SETTINGS["WIDTH"])
-        ax.set_ylim(-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"])
+        ax.set_xlim(-SETTINGS["LEFT"], SETTINGS["RIGHT"])
+        ax.set_ylim(-SETTINGS["DOWN"], SETTINGS["UP"])
 
         if SETTINGS["AXIS"]:
-            ax.plot([-SETTINGS["WIDTH"], SETTINGS["WIDTH"]], [0, 0], color=SETTINGS["AXIS_COLOR"])
-            ax.plot([0, 0], [-SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]], color=SETTINGS["AXIS_COLOR"])
+            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [0, 0], color=SETTINGS["AXIS_COLOR"])
+            ax.plot([0, 0], [-SETTINGS["DOWN"], SETTINGS["UP"]], color=SETTINGS["AXIS_COLOR"])
             ax.set_xlabel(SETTINGS["X_AXIS_LABEL"])
             ax.set_ylabel(SETTINGS["Y_AXIS_LABEL"])
 
             if SETTINGS["AXIS_TICK"]:
-                for i in range(-outer_corner, outer_corner + 1):
+                for i in range(-SETTINGS["CORNER"], SETTINGS["CORNER"] + 1):
                     ax.plot([i, i], [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
                             color=SETTINGS["AXIS_COLOR"]
                             )
@@ -318,27 +318,25 @@ class Diagram:
                             )
 
         if SETTINGS["LIGHT"]:
-            ax.plot([-inner_corner, inner_corner], [-inner_corner, inner_corner],
+            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
                     color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
-            ax.plot([-inner_corner, inner_corner], [inner_corner, -inner_corner],
+            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [SETTINGS["LEFT"], -SETTINGS["RIGHT"]],
                     color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
 
             if SETTINGS["SPACE_LIKE"]:
-                ax.fill_between([0, inner_corner, SETTINGS["WIDTH"]], [0, inner_corner, SETTINGS["WIDTH"]],
-                                [0, -inner_corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
-                                color=SETTINGS["SPACE_COLOR"])
-                ax.fill_between([0, -inner_corner, -SETTINGS["WIDTH"]], [0, inner_corner, SETTINGS["WIDTH"]],
-                                [0, -inner_corner, -SETTINGS["WIDTH"]], alpha=SETTINGS["SPACE_ALPHA"],
-                                color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between([0, SETTINGS["RIGHT"]], [0, -SETTINGS["RIGHT"]], [0, SETTINGS["RIGHT"]],
+                                alpha=SETTINGS["SPACE_ALPHA"], color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between([0, -SETTINGS["LEFT"]], [0, -SETTINGS["LEFT"]], [0, SETTINGS["LEFT"]],
+                                alpha=SETTINGS["SPACE_ALPHA"], color=SETTINGS["SPACE_COLOR"])
 
             if SETTINGS["TIME_LIKE"]:
-                ax.fill_between([-inner_corner, 0, inner_corner], [inner_corner, 0, inner_corner],
-                                [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+                ax.fill_between([-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]], [SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
+                                [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
                                 alpha=SETTINGS["TIME_ALPHA"],
                                 color=SETTINGS["TIME_COLOR"])
-                ax.fill_between([-inner_corner, 0, inner_corner],
-                                [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
-                                [-inner_corner, 0, -inner_corner],
+                ax.fill_between([-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
+                                [-SETTINGS["CORNER"], -SETTINGS["CORNER"], -SETTINGS["CORNER"]],
+                                [-SETTINGS["LEFT"], 0, -SETTINGS["RIGHT"]],
                                 alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
 
         if SETTINGS["GRID"]:
@@ -369,27 +367,27 @@ class Diagram:
 
             if "future" in event.settings.keys() and event.settings["future"]:
                 ax.fill_between(
-                    [-SETTINGS["WIDTH"], event.z, SETTINGS["WIDTH"]],
-                    [SETTINGS["WIDTH"] + event.z + event.t, event.t, SETTINGS["WIDTH"] - event.z + event.t],
-                    [SETTINGS["HEIGHT"], SETTINGS["HEIGHT"], SETTINGS["HEIGHT"]],
+                    [-SETTINGS["LEFT"], event.z, SETTINGS["RIGHT"]],
+                    [SETTINGS["LEFT"] + event.z + event.t, event.t, SETTINGS["RIGHT"] - event.z + event.t],
+                    [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
                     alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["DATA_COLOR"]
                 )
 
             if "past" in event.settings.keys() and event.settings["past"]:
                 ax.fill_between(
-                    [-SETTINGS["WIDTH"], event.z, SETTINGS["WIDTH"]],
-                    [-SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"], -SETTINGS["HEIGHT"]],
-                    [-SETTINGS["WIDTH"] - event.z + event.t, event.t, -SETTINGS["WIDTH"] + event.z + event.t],
+                    [-SETTINGS["LEFT"], event.z, SETTINGS["RIGHT"]],
+                    [-SETTINGS["CORNER"], -SETTINGS["CORNER"], -SETTINGS["CORNER"]],
+                    [-SETTINGS["LEFT"] - event.z + event.t, event.t, -SETTINGS["RIGHT"] + event.z + event.t],
                     alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
                 )
 
             if "independent" in event.settings.keys() and event.settings["independent"]:
-                ax.fill_between([-outer_corner, event.z], [-outer_corner - event.z + event.t, event.t],
-                                [outer_corner + event.t + event.z, event.t],
+                ax.fill_between([-SETTINGS["CORNER"], event.z], [-SETTINGS["CORNER"] - event.z + event.t, event.t],
+                                [SETTINGS["CORNER"] + event.t + event.z, event.t],
                                 alpha=SETTINGS["SPACE_ALPHA"],
                                 color=SETTINGS["SPACE_COLOR"])
-                ax.fill_between([outer_corner, event.z], [-outer_corner + event.z + event.t, event.t],
-                                [outer_corner + event.t - event.z, event.t],
+                ax.fill_between([SETTINGS["CORNER"], event.z], [-SETTINGS["CORNER"] + event.z + event.t, event.t],
+                                [SETTINGS["CORNER"] + event.t - event.z, event.t],
                                 alpha=SETTINGS["SPACE_ALPHA"],
                                 color=SETTINGS["SPACE_COLOR"])
 
