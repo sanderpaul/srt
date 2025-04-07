@@ -26,7 +26,6 @@ class Point:
                      color, linestyle, marker, hyperbel_color, hyperbel_linestyle)
 
 
-
 class Event(Point):
 
     def __init__(self, z: float, t: float, settings: dict, world_line=None,
@@ -84,6 +83,7 @@ class Event(Point):
 
     def to_point(self):
         return Point(self.z, self.t)
+
 
 class Line():
 
@@ -211,29 +211,29 @@ class Difference:
 
         if "t_first" in settings.keys() and settings["t_first"]:
             self.lines.append(plt.Line2D(
-                [intersections["time_space"].z, first.z],
-                [intersections["time_space"].t, first.t],
-                color=color, linestyle=linestyle)
-            )
-
-        if "t_second" in settings.keys() and settings["t_second"]:
-            self.lines.append(plt.Line2D(
-                [intersections["time_space"].z, second.z],
-                [intersections["time_space"].t, second.t],
-                color=color, linestyle=linestyle)
-            )
-
-        if "z_first" in settings.keys() and settings["z_first"]:
-            self.lines.append(plt.Line2D(
                 [intersections["space_time"].z, first.z],
                 [intersections["space_time"].t, first.t],
                 color=color, linestyle=linestyle)
             )
 
-        if "z_second" in settings.keys() and settings["z_second"]:
+        if "t_second" in settings.keys() and settings["t_second"]:
             self.lines.append(plt.Line2D(
                 [intersections["space_time"].z, second.z],
                 [intersections["space_time"].t, second.t],
+                color=color, linestyle=linestyle)
+            )
+
+        if "z_first" in settings.keys() and settings["z_first"]:
+            self.lines.append(plt.Line2D(
+                [intersections["time_space"].z, first.z],
+                [intersections["time_space"].t, first.t],
+                color=color, linestyle=linestyle)
+            )
+
+        if "z_second" in settings.keys() and settings["z_second"]:
+            self.lines.append(plt.Line2D(
+                [intersections["time_space"].z, second.z],
+                [intersections["time_space"].t, second.t],
                 color=color, linestyle=linestyle)
             )
 
@@ -342,7 +342,7 @@ class Diagram:
             ax.add_line(copy.deepcopy(line))
 
         for patch in self._patches:
-            ax.add_patch(patch)
+            ax.add_patch(copy.deepcopy(patch))
 
         for i, event in enumerate(self._events):
             if event.secondary_coordinates is not None:
