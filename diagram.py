@@ -6,6 +6,7 @@ from matplotlib.lines import Line2D
 
 from settings import *
 
+
 class Point:
 
     def __init__(self, z, t):
@@ -18,14 +19,26 @@ class Point:
     def to_point(self):
         return self
 
+    def to_event(self, settings: dict, world_line=None,
+                 color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"], marker=SETTINGS["DATA_MARKER"],
+                 hyperbel_color=SETTINGS["HYPERBEL_COLOR"], hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"]):
+        return Event(self.z, self.t, settings, world_line,
+                     color, linestyle, marker, hyperbel_color, hyperbel_linestyle)
+
+
 
 class Event(Point):
 
-    def __init__(self, z: float, t: float, settings: dict, world_line=None):
+    def __init__(self, z: float, t: float, settings: dict, world_line=None,
+                 color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"], marker=SETTINGS["DATA_MARKER"],
+                 hyperbel_color=SETTINGS["HYPERBEL_COLOR"], hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"]):
         super().__init__(z, t)
         self.lines = []
         self.settings = settings
         self.secondary_coordinates = None
+        self.color = color
+        self.linestyle = linestyle
+        self.marker = marker
 
         if ("use_world_line_as_default" in self.settings.keys() and
                 self.settings["use_world_line_as_default"]
@@ -33,17 +46,13 @@ class Event(Point):
 
             self.lines.extend(
                 Difference(first=self, second=world_line.origin, settings=self.settings,
-                           beta=world_line.beta, color=SETTINGS["DATA_COLOR"],
-                           linestyle=SETTINGS["DATA_LINE"]
-                           ).lines
+                           beta=world_line.beta, color=color, linestyle=linestyle).lines
             )
 
         else:
             self.lines.extend(
                 Difference(first=self, second=Point(0, 0), settings=self.settings,
-                           beta=0.0, color=SETTINGS["DATA_COLOR"],
-                           linestyle=SETTINGS["DATA_LINE"]
-                           ).lines
+                           beta=0.0, color=color, linestyle=linestyle).lines
             )
 
         if world_line is not None:
@@ -60,34 +69,21 @@ class Event(Point):
                 z = np.linspace(SETTINGS["LEFT"], SETTINGS["RIGHT"], 1000)
                 if self.t > 0:
                     self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
-                                             color=SETTINGS["HYPERBEL_COLOR"],
-                                             linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=label)
-                                      )
+                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
                 else:
                     self.lines.append(Line2D(z, -np.sqrt(absolute + z ** 2),
-                                             color=SETTINGS["HYPERBEL_COLOR"],
-                                             linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=label)
-                                      )
+                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
             else:
                 t = np.linspace(-SETTINGS["DOWN"], SETTINGS["UP"], 1000)
                 if self.z > 0:
                     self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
-                                             color=SETTINGS["HYPERBEL_COLOR"],
-                                             linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=label)
-                                      )
+                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
                 else:
                     self.lines.append(Line2D(- np.sqrt(abs(absolute) + t ** 2), t,
-                                             color=SETTINGS["HYPERBEL_COLOR"],
-                                             linestyle=SETTINGS["HYPERBEL_LINE"],
-                                             label=label)
-                                      )
+                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
 
     def to_point(self):
         return Point(self.z, self.t)
-
 
 class Line():
 
@@ -351,8 +347,8 @@ class Diagram:
         for i, event in enumerate(self._events):
             if event.secondary_coordinates is not None:
                 ax.plot(event.z, event.t,
-                        marker=SETTINGS["DATA_MARKER"],
-                        color=SETTINGS["DATA_COLOR"],
+                        marker=event.marker,
+                        color=event.color,
                         linestyle="None",
                         label=(rf"$z_{i + 1}$: {event.z:.2f}, "
                                rf"$ct_{i + 1}$: {event.t:.2f} || "
@@ -360,7 +356,7 @@ class Diagram:
                                rf"$ct_{i + 1}'$: {event.secondary_coordinates.t:.2f}")
                         )
             else:
-                ax.plot(event.z, event.t, marker=SETTINGS["DATA_MARKER"], color=SETTINGS["DATA_COLOR"],
+                ax.plot(event.z, event.t, marker=event.marker, color=event.color,
                         linestyle="None",
                         label=rf"$z_{i + 1}$: {event.z:.2f}, $ct_{i + 1}$: {event.t:.2f}"
                         )
@@ -370,7 +366,7 @@ class Diagram:
                     [-SETTINGS["LEFT"], event.z, SETTINGS["RIGHT"]],
                     [SETTINGS["LEFT"] + event.z + event.t, event.t, SETTINGS["RIGHT"] - event.z + event.t],
                     [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
-                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["DATA_COLOR"]
+                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
                 )
 
             if "past" in event.settings.keys() and event.settings["past"]:
