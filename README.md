@@ -16,7 +16,7 @@ Run `create_plots.py` from the project root to generate all diagrams:
 python create_plots.py
 ```
 
-Output PNGs are written to `img/`. The folder is created automatically if it does not exist.
+Output PNGs are written to `img/<section>/` — one subfolder per topic, created automatically. Images are numbered sequentially (`1.png`, `2.png`, …) in the order they are drawn.
 
 To generate only specific sections, comment out entries in the `sections` list inside `create_plots.py`:
 
@@ -35,6 +35,7 @@ sections = [
 create_plots.py      # Entry point — lists which sections to run
 settings.py          # Global SETTINGS dict and with_global_settings decorator
 diagram.py           # Core library: Point, Event, Line, WorldLine, Difference, Diagram
+                     # also exports with_output_folder decorator
 plots/               # One file per topic
     plots_intro.py
     plots_time_space.py
@@ -42,10 +43,14 @@ plots/               # One file per topic
     plots_dil_con.py
     plots_vel_add.py
     plots_doppler.py
+    plots_doppler_echo.py
+    plots_doppler_length.py
     plots_muon.py
     plots_twins.py
 img/                 # Generated output (git-ignored)
-    gif/             # Frame sequence for worldline animation
+    plots_intro/     # 1.png, 2.png, … for each section
+    plots_doppler/
+    …
 ```
 
 ## Core Concepts
@@ -112,6 +117,12 @@ All visual parameters live in the `SETTINGS` dict in `settings.py`. Key entries:
 
 Each plot section's `run()` function is decorated with `@with_global_settings`, which saves and restores the full `SETTINGS` dict so sections cannot affect each other.
 
+### Output Folder
+
+The `@with_output_folder` decorator (from `diagram.py`) controls where `Diagram.draw()` saves files. When a `folder` argument is passed to `run()`, images are saved as `<folder>/1.png`, `<folder>/2.png`, … and the folder is created if it does not exist. Without a folder the original `img/<name>.png` flat layout is used instead.
+
+`create_plots.py` passes `folder=f"img/{section}"` for each section, so every topic gets its own subfolder.
+
 ## Adding a New Section
 
 1. Create `plots/plots_mysection.py`:
@@ -123,6 +134,7 @@ from settings import *
 
 
 @with_global_settings
+@with_output_folder
 def run():
     plot = Diagram()
     plot.add_event(Event(1, 2, settings={}))
