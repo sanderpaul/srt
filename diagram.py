@@ -19,18 +19,43 @@ class Point:
     def to_point(self):
         return self
 
-    def to_event(self, settings: dict, world_line=None,
-                 color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"], marker=SETTINGS["DATA_MARKER"],
-                 hyperbel_color=SETTINGS["HYPERBEL_COLOR"], hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"]):
-        return Event(self.z, self.t, settings, world_line,
-                     color, linestyle, marker, hyperbel_color, hyperbel_linestyle)
+    def to_event(
+        self,
+        settings: dict,
+        world_line=None,
+        color=SETTINGS["DATA_COLOR"],
+        linestyle=SETTINGS["DATA_LINE"],
+        marker=SETTINGS["DATA_MARKER"],
+        hyperbel_color=SETTINGS["HYPERBEL_COLOR"],
+        hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"],
+    ):
+        return Event(
+            self.z,
+            self.t,
+            settings,
+            world_line,
+            color,
+            linestyle,
+            marker,
+            hyperbel_color,
+            hyperbel_linestyle,
+        )
 
 
 class Event(Point):
 
-    def __init__(self, z: float, t: float, settings: dict, world_line=None,
-                 color=SETTINGS["DATA_COLOR"], linestyle=SETTINGS["DATA_LINE"], marker=SETTINGS["DATA_MARKER"],
-                 hyperbel_color=SETTINGS["HYPERBEL_COLOR"], hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"]):
+    def __init__(
+        self,
+        z: float,
+        t: float,
+        settings: dict,
+        world_line=None,
+        color=SETTINGS["DATA_COLOR"],
+        linestyle=SETTINGS["DATA_LINE"],
+        marker=SETTINGS["DATA_MARKER"],
+        hyperbel_color=SETTINGS["HYPERBEL_COLOR"],
+        hyperbel_linestyle=SETTINGS["HYPERBEL_LINE"],
+    ):
         super().__init__(z, t)
         self.lines = []
         self.settings = settings
@@ -39,57 +64,101 @@ class Event(Point):
         self.linestyle = linestyle
         self.marker = marker
 
-        if ("use_world_line_as_default" in self.settings.keys() and
-                self.settings["use_world_line_as_default"]
-                and world_line is not None):
+        if (
+            "use_world_line_as_default" in self.settings.keys()
+            and self.settings["use_world_line_as_default"]
+            and world_line is not None
+        ):
 
             self.lines.extend(
-                Difference(first=self, second=world_line.origin, settings=self.settings,
-                           beta=world_line.beta, color=color, linestyle=linestyle).lines
+                Difference(
+                    first=self,
+                    second=world_line.origin,
+                    settings=self.settings,
+                    beta=world_line.beta,
+                    color=color,
+                    linestyle=linestyle,
+                ).lines
             )
 
         else:
             self.lines.extend(
-                Difference(first=self, second=Point(0, 0), settings=self.settings,
-                           beta=0.0, color=color, linestyle=linestyle).lines
+                Difference(
+                    first=self,
+                    second=Point(0, 0),
+                    settings=self.settings,
+                    beta=0.0,
+                    color=color,
+                    linestyle=linestyle,
+                ).lines
             )
 
         if world_line is not None:
             self.secondary_coordinates = convert(
-                first=self.to_point(), input=Line(Point(0, 0), beta=0), output=world_line.to_line()
+                first=self.to_point(),
+                input=Line(Point(0, 0), beta=0),
+                output=world_line.to_line(),
             )
 
         if "hyperbel" in self.settings.keys() and self.settings["hyperbel"]:
-            absolute = self.t ** 2 - self.z ** 2
-            label = fr"$\Delta s^2$: {absolute:.2f}"
+            absolute = self.t**2 - self.z**2
+            label = rf"$\Delta s^2$: {absolute:.2f}"
             if abs(absolute) < 1e-10:
                 pass
             elif absolute > 0:
-                z = np.linspace(SETTINGS["LEFT"], SETTINGS["RIGHT"], 1000)
+                z = np.linspace(-SETTINGS["LEFT"], SETTINGS["RIGHT"], 1000)
                 if self.t > 0:
-                    self.lines.append(Line2D(z, np.sqrt(absolute + z ** 2),
-                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
+                    self.lines.append(
+                        Line2D(
+                            z,
+                            np.sqrt(absolute + z**2),
+                            color=hyperbel_color,
+                            linestyle=hyperbel_linestyle,
+                            label=label,
+                        )
+                    )
                 else:
-                    self.lines.append(Line2D(z, -np.sqrt(absolute + z ** 2),
-                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
+                    self.lines.append(
+                        Line2D(
+                            z,
+                            -np.sqrt(absolute + z**2),
+                            color=hyperbel_color,
+                            linestyle=hyperbel_linestyle,
+                            label=label,
+                        )
+                    )
             else:
                 t = np.linspace(-SETTINGS["DOWN"], SETTINGS["UP"], 1000)
                 if self.z > 0:
-                    self.lines.append(Line2D(np.sqrt(abs(absolute) + t ** 2), t,
-                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
+                    self.lines.append(
+                        Line2D(
+                            np.sqrt(abs(absolute) + t**2),
+                            t,
+                            color=hyperbel_color,
+                            linestyle=hyperbel_linestyle,
+                            label=label,
+                        )
+                    )
                 else:
-                    self.lines.append(Line2D(- np.sqrt(abs(absolute) + t ** 2), t,
-                                             color=hyperbel_color, linestyle=hyperbel_linestyle, label=label))
+                    self.lines.append(
+                        Line2D(
+                            -np.sqrt(abs(absolute) + t**2),
+                            t,
+                            color=hyperbel_color,
+                            linestyle=hyperbel_linestyle,
+                            label=label,
+                        )
+                    )
 
     def to_point(self):
         return Point(self.z, self.t)
 
 
-class Line():
+class Line:
 
     def __init__(self, origin: Point, beta):
-        if abs(beta) > 1:
-            raise ValueError("beta must be in [-1, 1]")
+        if abs(beta) >= 1:
+            raise ValueError("beta must be in (-1, 1)")
 
         self.origin = origin
         self.beta = beta
@@ -100,77 +169,143 @@ class Line():
 
 class WorldLine(Line):
 
-    def __init__(self, origin: Point, beta, settings: dict, linestyle=SETTINGS["WORLD_LINE"],
-                 color=SETTINGS["WORLD_LINE_COLOR"]):
+    def __init__(
+        self,
+        origin: Point,
+        beta,
+        settings: dict,
+        linestyle=SETTINGS["WORLD_LINE"],
+        color=SETTINGS["WORLD_LINE_COLOR"],
+    ):
         super().__init__(origin, beta)
 
-        self.gamma = 1 / np.sqrt(1 - beta ** 2)
+        self.gamma = 1 / np.sqrt(1 - beta**2)
         self.angles = []
         self.ticks = []
         self.time = None
         self.space = None
 
-        r = np.linspace(- SETTINGS["CORNER"], SETTINGS["CORNER"], 2)
+        r = np.linspace(-SETTINGS["CORNER"], SETTINGS["CORNER"], 2)
 
-        label = fr"$\beta$: {beta:.2f}" if (
-                abs(origin.t) < 1e-3 or abs(origin.z) < 1e-3
-        ) else fr"$\beta$: {beta:.2f}, z: {origin.z:.2f}, t: {origin.t:.2f}"
+        label = (
+            rf"$\beta$: {beta:.2f}"
+            if (abs(origin.t) < 1e-3 and abs(origin.z) < 1e-3)
+            else rf"$\beta$: {beta:.2f}, z: {origin.z:.2f}, t: {origin.t:.2f}"
+        )
 
         if "time" in settings.keys() and settings["time"]:
-            self.time = plt.Line2D(beta * (r - origin.t) + origin.z, r, color=color, linestyle=linestyle, label=label)
+            self.time = plt.Line2D(
+                beta * (r - origin.t) + origin.z,
+                r,
+                color=color,
+                linestyle=linestyle,
+                label=label,
+            )
 
-            if "time_angle" in settings.keys() and settings["time_angle"] and abs(beta) > 1e-3:
+            if (
+                "time_angle" in settings.keys()
+                and settings["time_angle"]
+                and abs(beta) > 1e-3
+            ):
                 if beta > 0:
-                    self.angles.append(patches.Arc(
-                        xy=(origin.z, origin.t), width=3 * beta, height=3 * beta, angle=0,
-                        theta1=np.arctan(1 / beta) * 180 / np.pi,
-                        theta2=90, color=color)
+                    self.angles.append(
+                        patches.Arc(
+                            xy=(origin.z, origin.t),
+                            width=3 * beta,
+                            height=3 * beta,
+                            angle=0,
+                            theta1=np.arctan(1 / beta) * 180 / np.pi,
+                            theta2=90,
+                            color=color,
+                        )
                     )
                 else:
-                    self.angles.append(patches.Arc(
-                        xy=(origin.z, origin.t), width=-3 * beta, height=-3 * beta, angle=0,
-                        theta1=90,
-                        theta2=90 + np.arctan(-beta) * 180 / np.pi, color=color)
+                    self.angles.append(
+                        patches.Arc(
+                            xy=(origin.z, origin.t),
+                            width=-3 * beta,
+                            height=-3 * beta,
+                            angle=0,
+                            theta1=90,
+                            theta2=90 + np.arctan(-beta) * 180 / np.pi,
+                            color=color,
+                        )
                     )
 
             if "time_ticks" in settings.keys() and settings["time_ticks"]:
                 n_ticks = 4 * SETTINGS["CORNER"] + 1
-                dz = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
-                dt = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
-
-                r = np.linspace(- 2 * SETTINGS["CORNER"], 2 * SETTINGS["CORNER"], n_ticks, endpoint=True)
-                t = origin.t + r * self.gamma
-                z = origin.z + r * self.beta * self.gamma
+                r = np.linspace(
+                    -2 * SETTINGS["CORNER"],
+                    2 * SETTINGS["CORNER"],
+                    n_ticks,
+                    endpoint=True,
+                )
 
                 if abs(beta) < 1e-3:
-                    self.time = plt.Line2D(z, t, color=color, label=label)
+                    dz = SETTINGS["TICK_LENGTH"]
+                    dt = 0.0
+                    z = np.full(n_ticks, origin.z)
+                    t = origin.t + r
                 else:
-                    self.time = plt.Line2D(z, t, color=color, label=label)
+                    dz = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
+                    dt = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
+                    t = origin.t + r * self.gamma
+                    z = origin.z + r * self.beta * self.gamma
 
+                self.time = plt.Line2D(z, t, color=color, label=label)
                 for z_i, t_i in zip(z, t):
-                    self.ticks.append(plt.Line2D(
-                        [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
-                    ))
+                    self.ticks.append(
+                        plt.Line2D(
+                            [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
+                        )
+                    )
 
         if "space" in settings.keys() and settings["space"]:
             if "time" in settings.keys() and settings["time"]:
-                self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle)
+                self.space = plt.Line2D(
+                    r,
+                    beta * (r - origin.z) + origin.t,
+                    color=color,
+                    linestyle=linestyle,
+                )
             else:
-                self.space = plt.Line2D(r, beta * (r - origin.z) + origin.t, color=color, linestyle=linestyle,
-                                        label=label)
+                self.space = plt.Line2D(
+                    r,
+                    beta * (r - origin.z) + origin.t,
+                    color=color,
+                    linestyle=linestyle,
+                    label=label,
+                )
 
-            if "space_angle" in settings.keys() and settings["space_angle"] and abs(beta) > 1e-3:
+            if (
+                "space_angle" in settings.keys()
+                and settings["space_angle"]
+                and abs(beta) > 1e-3
+            ):
                 if beta > 0:
-                    self.angles.append(patches.Arc(
-                        xy=(origin.z, origin.t), width=3 * beta, height=3 * beta, angle=0, theta1=0,
-                        theta2=np.arctan(beta) * 180 / np.pi, color=color
-                    ))
+                    self.angles.append(
+                        patches.Arc(
+                            xy=(origin.z, origin.t),
+                            width=3 * beta,
+                            height=3 * beta,
+                            angle=0,
+                            theta1=0,
+                            theta2=np.arctan(beta) * 180 / np.pi,
+                            color=color,
+                        )
+                    )
                 else:
-                    self.angles.append(patches.Arc(
-                        xy=(origin.z, origin.t), width=-3 * beta, height=-3 * beta, angle=0,
-                        theta1=180 - np.arctan(-beta) * 180 / np.pi,
-                        theta2=180, color=color
-                    ))
+                    self.angles.append(
+                        patches.Arc(
+                            xy=(origin.z, origin.t),
+                            width=-3 * beta,
+                            height=-3 * beta,
+                            angle=0,
+                            theta1=180 - np.arctan(-beta) * 180 / np.pi,
+                            theta2=180,
+                            color=color,
+                        )
+                    )
 
             if "space_ticks" in settings.keys() and settings["space_ticks"]:
                 self.space = None
@@ -178,7 +313,12 @@ class WorldLine(Line):
                 dz = SETTINGS["TICK_LENGTH"] * np.sin(np.arctan(self.beta))
                 dt = SETTINGS["TICK_LENGTH"] * np.cos(np.arctan(self.beta))
 
-                r = np.linspace(- 2 * SETTINGS["CORNER"], 2 * SETTINGS["CORNER"], n_ticks, endpoint=True)
+                r = np.linspace(
+                    -2 * SETTINGS["CORNER"],
+                    2 * SETTINGS["CORNER"],
+                    n_ticks,
+                    endpoint=True,
+                )
                 t = origin.t + r * self.beta * self.gamma
                 z = origin.z + r * self.gamma
 
@@ -188,9 +328,11 @@ class WorldLine(Line):
                     self.space = plt.Line2D(z, t, color=color, label=label)
 
                 for z_i, t_i in zip(z, t):
-                    self.ticks.append(plt.Line2D(
-                        [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
-                    ))
+                    self.ticks.append(
+                        plt.Line2D(
+                            [z_i + dz, z_i - dz], [t_i - dt, t_i + dt], color=color
+                        )
+                    )
 
     def to_line(self):
         return Line(self.origin, self.beta)
@@ -198,43 +340,68 @@ class WorldLine(Line):
 
 class Difference:
 
-    def __init__(self, first: Point, second: Point, settings: dict, beta=0.0, color=SETTINGS["DIFF_COLOR"],
-                 linestyle=SETTINGS["DIFF_LINE"]):
+    def __init__(
+        self,
+        first: Point,
+        second: Point,
+        settings: dict,
+        beta=0.0,
+        color=SETTINGS["DIFF_COLOR"],
+        linestyle=SETTINGS["DIFF_LINE"],
+    ):
         self.lines = []
 
         if "direct" in settings.keys() and settings["direct"]:
-            self.lines.append(plt.Line2D(
-                [first.z, second.z], [first.t, second.t], color=color, linestyle=linestyle))
+            self.lines.append(
+                plt.Line2D(
+                    [first.z, second.z],
+                    [first.t, second.t],
+                    color=color,
+                    linestyle=linestyle,
+                )
+            )
             return
 
         intersections = connect(first, second, beta)  # Intersection with Space Axis
 
         if "t_first" in settings.keys() and settings["t_first"]:
-            self.lines.append(plt.Line2D(
-                [intersections["space_time"].z, first.z],
-                [intersections["space_time"].t, first.t],
-                color=color, linestyle=linestyle)
+            self.lines.append(
+                plt.Line2D(
+                    [intersections["space_time"].z, first.z],
+                    [intersections["space_time"].t, first.t],
+                    color=color,
+                    linestyle=linestyle,
+                )
             )
 
         if "t_second" in settings.keys() and settings["t_second"]:
-            self.lines.append(plt.Line2D(
-                [intersections["space_time"].z, second.z],
-                [intersections["space_time"].t, second.t],
-                color=color, linestyle=linestyle)
+            self.lines.append(
+                plt.Line2D(
+                    [intersections["space_time"].z, second.z],
+                    [intersections["space_time"].t, second.t],
+                    color=color,
+                    linestyle=linestyle,
+                )
             )
 
         if "z_first" in settings.keys() and settings["z_first"]:
-            self.lines.append(plt.Line2D(
-                [intersections["time_space"].z, first.z],
-                [intersections["time_space"].t, first.t],
-                color=color, linestyle=linestyle)
+            self.lines.append(
+                plt.Line2D(
+                    [intersections["time_space"].z, first.z],
+                    [intersections["time_space"].t, first.t],
+                    color=color,
+                    linestyle=linestyle,
+                )
             )
 
         if "z_second" in settings.keys() and settings["z_second"]:
-            self.lines.append(plt.Line2D(
-                [intersections["time_space"].z, second.z],
-                [intersections["time_space"].t, second.t],
-                color=color, linestyle=linestyle)
+            self.lines.append(
+                plt.Line2D(
+                    [intersections["time_space"].z, second.z],
+                    [intersections["time_space"].t, second.t],
+                    color=color,
+                    linestyle=linestyle,
+                )
             )
 
 
@@ -251,6 +418,7 @@ class Diagram:
     def __del__(self):
         del self._events
         del self._lines
+        del self._patches
         del self.figure
 
     def add_world_line(self, world_line: WorldLine):
@@ -291,7 +459,9 @@ class Diagram:
 
     def prepare(self):
         figure = plt.figure(figsize=(SETTINGS["FIG_WIDTH"], SETTINGS["FIG_HEIGHT"]))
-        figure.text(0.57, 0.12, "Paul Sander, ETH Zürich", fontsize=15, color="gray", alpha=0.2)
+        figure.text(
+            0.57, 0.12, "Paul Sander, ETH Zürich", fontsize=15, color="gray", alpha=0.2
+        )
         ax = figure.add_subplot(111)
 
         ax.set_title(SETTINGS["TITLE"])
@@ -299,41 +469,77 @@ class Diagram:
         ax.set_ylim(-SETTINGS["DOWN"], SETTINGS["UP"])
 
         if SETTINGS["AXIS"]:
-            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [0, 0], color=SETTINGS["AXIS_COLOR"])
-            ax.plot([0, 0], [-SETTINGS["DOWN"], SETTINGS["UP"]], color=SETTINGS["AXIS_COLOR"])
+            ax.plot(
+                [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
+                [0, 0],
+                color=SETTINGS["AXIS_COLOR"],
+            )
+            ax.plot(
+                [0, 0],
+                [-SETTINGS["DOWN"], SETTINGS["UP"]],
+                color=SETTINGS["AXIS_COLOR"],
+            )
             ax.set_xlabel(SETTINGS["X_AXIS_LABEL"])
             ax.set_ylabel(SETTINGS["Y_AXIS_LABEL"])
 
             if SETTINGS["AXIS_TICK"]:
                 for i in range(-SETTINGS["CORNER"], SETTINGS["CORNER"] + 1):
-                    ax.plot([i, i], [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
-                            color=SETTINGS["AXIS_COLOR"]
-                            )
-                    ax.plot([-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]], [i, i],
-                            color=SETTINGS["AXIS_COLOR"]
-                            )
+                    ax.plot(
+                        [i, i],
+                        [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
+                        color=SETTINGS["AXIS_COLOR"],
+                    )
+                    ax.plot(
+                        [-SETTINGS["TICK_LENGTH"], SETTINGS["TICK_LENGTH"]],
+                        [i, i],
+                        color=SETTINGS["AXIS_COLOR"],
+                    )
 
         if SETTINGS["LIGHT"]:
-            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
-                    color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
-            ax.plot([-SETTINGS["LEFT"], SETTINGS["RIGHT"]], [SETTINGS["LEFT"], -SETTINGS["RIGHT"]],
-                    color=SETTINGS["LIGHT_COLOR"], alpha=SETTINGS["LIGHT_ALPHA"])
+            ax.plot(
+                [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
+                [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
+                color=SETTINGS["LIGHT_COLOR"],
+                alpha=SETTINGS["LIGHT_ALPHA"],
+            )
+            ax.plot(
+                [-SETTINGS["LEFT"], SETTINGS["RIGHT"]],
+                [SETTINGS["LEFT"], -SETTINGS["RIGHT"]],
+                color=SETTINGS["LIGHT_COLOR"],
+                alpha=SETTINGS["LIGHT_ALPHA"],
+            )
 
             if SETTINGS["SPACE_LIKE"]:
-                ax.fill_between([0, SETTINGS["RIGHT"]], [0, -SETTINGS["RIGHT"]], [0, SETTINGS["RIGHT"]],
-                                alpha=SETTINGS["SPACE_ALPHA"], color=SETTINGS["SPACE_COLOR"])
-                ax.fill_between([0, -SETTINGS["LEFT"]], [0, -SETTINGS["LEFT"]], [0, SETTINGS["LEFT"]],
-                                alpha=SETTINGS["SPACE_ALPHA"], color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between(
+                    [0, SETTINGS["RIGHT"]],
+                    [0, -SETTINGS["RIGHT"]],
+                    [0, SETTINGS["RIGHT"]],
+                    alpha=SETTINGS["SPACE_ALPHA"],
+                    color=SETTINGS["SPACE_COLOR"],
+                )
+                ax.fill_between(
+                    [0, -SETTINGS["LEFT"]],
+                    [0, -SETTINGS["LEFT"]],
+                    [0, SETTINGS["LEFT"]],
+                    alpha=SETTINGS["SPACE_ALPHA"],
+                    color=SETTINGS["SPACE_COLOR"],
+                )
 
             if SETTINGS["TIME_LIKE"]:
-                ax.fill_between([-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]], [SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
-                                [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
-                                alpha=SETTINGS["TIME_ALPHA"],
-                                color=SETTINGS["TIME_COLOR"])
-                ax.fill_between([-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
-                                [-SETTINGS["CORNER"], -SETTINGS["CORNER"], -SETTINGS["CORNER"]],
-                                [-SETTINGS["LEFT"], 0, -SETTINGS["RIGHT"]],
-                                alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"])
+                ax.fill_between(
+                    [-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
+                    [SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
+                    [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
+                    alpha=SETTINGS["TIME_ALPHA"],
+                    color=SETTINGS["TIME_COLOR"],
+                )
+                ax.fill_between(
+                    [-SETTINGS["LEFT"], 0, SETTINGS["RIGHT"]],
+                    [-SETTINGS["CORNER"], -SETTINGS["CORNER"], -SETTINGS["CORNER"]],
+                    [-SETTINGS["LEFT"], 0, -SETTINGS["RIGHT"]],
+                    alpha=SETTINGS["TIME_ALPHA"],
+                    color=SETTINGS["TIME_COLOR"],
+                )
 
         if SETTINGS["GRID"]:
             ax.grid()
@@ -346,46 +552,70 @@ class Diagram:
 
         for i, event in enumerate(self._events):
             if event.secondary_coordinates is not None:
-                ax.plot(event.z, event.t,
-                        marker=event.marker,
-                        color=event.color,
-                        linestyle="None",
-                        label=(rf"$z_{i + 1}$: {event.z:.2f}, "
-                               rf"$ct_{i + 1}$: {event.t:.2f} || "
-                               rf"$z_{i + 1}'$: {event.secondary_coordinates.z:.2f}, "
-                               rf"$ct_{i + 1}'$: {event.secondary_coordinates.t:.2f}")
-                        )
+                ax.plot(
+                    event.z,
+                    event.t,
+                    marker=event.marker,
+                    color=event.color,
+                    linestyle="None",
+                    label=(
+                        rf"$z_{i + 1}$: {event.z:.2f}, "
+                        rf"$ct_{i + 1}$: {event.t:.2f} || "
+                        rf"$z_{i + 1}'$: {event.secondary_coordinates.z:.2f}, "
+                        rf"$ct_{i + 1}'$: {event.secondary_coordinates.t:.2f}"
+                    ),
+                )
             else:
-                ax.plot(event.z, event.t, marker=event.marker, color=event.color,
-                        linestyle="None",
-                        label=rf"$z_{i + 1}$: {event.z:.2f}, $ct_{i + 1}$: {event.t:.2f}"
-                        )
+                ax.plot(
+                    event.z,
+                    event.t,
+                    marker=event.marker,
+                    color=event.color,
+                    linestyle="None",
+                    label=rf"$z_{i + 1}$: {event.z:.2f}, $ct_{i + 1}$: {event.t:.2f}",
+                )
 
             if "future" in event.settings.keys() and event.settings["future"]:
                 ax.fill_between(
                     [-SETTINGS["LEFT"], event.z, SETTINGS["RIGHT"]],
-                    [SETTINGS["LEFT"] + event.z + event.t, event.t, SETTINGS["RIGHT"] - event.z + event.t],
+                    [
+                        SETTINGS["LEFT"] + event.z + event.t,
+                        event.t,
+                        SETTINGS["RIGHT"] - event.z + event.t,
+                    ],
                     [SETTINGS["CORNER"], SETTINGS["CORNER"], SETTINGS["CORNER"]],
-                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
+                    alpha=SETTINGS["TIME_ALPHA"],
+                    color=SETTINGS["TIME_COLOR"],
                 )
 
             if "past" in event.settings.keys() and event.settings["past"]:
                 ax.fill_between(
                     [-SETTINGS["LEFT"], event.z, SETTINGS["RIGHT"]],
                     [-SETTINGS["CORNER"], -SETTINGS["CORNER"], -SETTINGS["CORNER"]],
-                    [-SETTINGS["LEFT"] - event.z + event.t, event.t, -SETTINGS["RIGHT"] + event.z + event.t],
-                    alpha=SETTINGS["TIME_ALPHA"], color=SETTINGS["TIME_COLOR"]
+                    [
+                        -SETTINGS["LEFT"] - event.z + event.t,
+                        event.t,
+                        -SETTINGS["RIGHT"] + event.z + event.t,
+                    ],
+                    alpha=SETTINGS["TIME_ALPHA"],
+                    color=SETTINGS["TIME_COLOR"],
                 )
 
             if "independent" in event.settings.keys() and event.settings["independent"]:
-                ax.fill_between([-SETTINGS["CORNER"], event.z], [-SETTINGS["CORNER"] - event.z + event.t, event.t],
-                                [SETTINGS["CORNER"] + event.t + event.z, event.t],
-                                alpha=SETTINGS["SPACE_ALPHA"],
-                                color=SETTINGS["SPACE_COLOR"])
-                ax.fill_between([SETTINGS["CORNER"], event.z], [-SETTINGS["CORNER"] + event.z + event.t, event.t],
-                                [SETTINGS["CORNER"] + event.t - event.z, event.t],
-                                alpha=SETTINGS["SPACE_ALPHA"],
-                                color=SETTINGS["SPACE_COLOR"])
+                ax.fill_between(
+                    [-SETTINGS["CORNER"], event.z],
+                    [-SETTINGS["CORNER"] - event.z + event.t, event.t],
+                    [SETTINGS["CORNER"] + event.t + event.z, event.t],
+                    alpha=SETTINGS["SPACE_ALPHA"],
+                    color=SETTINGS["SPACE_COLOR"],
+                )
+                ax.fill_between(
+                    [SETTINGS["CORNER"], event.z],
+                    [-SETTINGS["CORNER"] + event.z + event.t, event.t],
+                    [SETTINGS["CORNER"] + event.t - event.z, event.t],
+                    alpha=SETTINGS["SPACE_ALPHA"],
+                    color=SETTINGS["SPACE_COLOR"],
+                )
 
         if len(self._lines) + len(self._events) > 0 and SETTINGS["LEGEND"]:
             ax.legend(loc=SETTINGS["LEGEND_LOC"])
@@ -408,20 +638,17 @@ def lorentz(point: Point, beta):
     if beta == 0:
         return point
 
-    beta = beta
-    gamma = 1 / np.sqrt(1 - beta ** 2)
+    gamma = 1 / np.sqrt(1 - beta**2)
 
-    return Point(
-        gamma * (point.z - beta * point.t),
-        gamma * (point.t - beta * point.z)
-    )
+    return Point(gamma * (point.z - beta * point.t), gamma * (point.t - beta * point.z))
 
 
 def connect(first: Point, second: Point, beta):
-    return intersect(Line(first, beta), Line(second, beta), settings={
-        "time_space": True,
-        "space_time": True
-    })
+    return intersect(
+        Line(first, beta),
+        Line(second, beta),
+        settings={"time_space": True, "space_time": True},
+    )
 
 
 def convert(first: Point, input: Line, output=None):
@@ -450,39 +677,49 @@ def intersect(first: Line, second: Line, settings: dict):
 
     if "time_time" in settings.keys() and settings["time_time"]:
         if abs(first.beta - second.beta) < 1e-3:
-            raise ValueError("The two lines share the same slope. They have no or infinite intersections.")
+            raise ValueError(
+                "The two lines share the same slope. They have no or infinite intersections."
+            )
         elif abs(first.beta) < 1e-3:
             result["time_time"] = Point(
-                first.origin.z, (first.origin.z - second.origin.z) / second.beta + second.origin.t
+                first.origin.z,
+                (first.origin.z - second.origin.z) / second.beta + second.origin.t,
             )
         elif abs(second.beta) < 1e-3:
             result["time_time"] = Point(
-                second.origin.z, (second.origin.z - first.origin.z) / first.beta + first.origin.t
+                second.origin.z,
+                (second.origin.z - first.origin.z) / first.beta + first.origin.t,
             )
         else:
-            result["time_time"] = intersection(p1=first.origin, m1=1 / first.beta,
-                                               p2=second.origin, m2=1 / second.beta)
+            result["time_time"] = intersection(
+                p1=first.origin, m1=1 / first.beta, p2=second.origin, m2=1 / second.beta
+            )
 
     if "time_space" in settings.keys() and settings["time_space"]:
         if abs(first.beta) < 1e-3:
             result["time_space"] = Point(
-                first.origin.z, second.beta * (first.origin.z - second.origin.z) + second.origin.t
+                first.origin.z,
+                second.beta * (first.origin.z - second.origin.z) + second.origin.t,
             )
         else:
-            result["time_space"] = intersection(p1=first.origin, m1=1 / first.beta,
-                                                p2=second.origin, m2=second.beta)
+            result["time_space"] = intersection(
+                p1=first.origin, m1=1 / first.beta, p2=second.origin, m2=second.beta
+            )
 
     if "space_time" in settings.keys() and settings["space_time"]:
         if abs(second.beta) < 1e-3:
             result["space_time"] = Point(
-                second.origin.z, first.beta * (second.origin.z - first.origin.z) + first.origin.t
+                second.origin.z,
+                first.beta * (second.origin.z - first.origin.z) + first.origin.t,
             )
         else:
-            result["space_time"] = intersection(p1=first.origin, m1=first.beta,
-                                                p2=second.origin, m2=1 / second.beta)
+            result["space_time"] = intersection(
+                p1=first.origin, m1=first.beta, p2=second.origin, m2=1 / second.beta
+            )
 
     if "space_space" in settings.keys() and settings["space_space"]:
-        result["space_space"] = intersection(p1=first.origin, m1=first.beta,
-                                             p2=second.origin, m2=second.beta)
+        result["space_space"] = intersection(
+            p1=first.origin, m1=first.beta, p2=second.origin, m2=second.beta
+        )
 
     return result

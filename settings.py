@@ -1,3 +1,6 @@
+import copy
+import functools
+
 SETTINGS = {
     "FIG_HEIGHT": 8,
     "FIG_WIDTH": 8,
@@ -47,3 +50,13 @@ SETTINGS = {
     "DIFF_COLOR": "C2",
     "DIFF_LINE": ":"
 }
+
+
+def with_global_settings(fn):
+    @functools.wraps(fn)
+    def wrapper():
+        saved = copy.copy(SETTINGS)
+        fn()
+        SETTINGS.clear()
+        SETTINGS.update(saved)
+    return wrapper
