@@ -13,6 +13,8 @@ sections = [
     "plots_dil_con",
     "plots_vel_add",
     "plots_doppler",
+    "plots_doppler_echo",
+    "plots_doppler_length",
     "plots_muon",
     "plots_twins",
 ]
