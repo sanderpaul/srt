@@ -4,6 +4,7 @@ from settings import *
 
 
 @with_global_settings
+@with_output_folder
 def run():
     plot = Diagram()
     plot.add_world_line(

@@ -20,4 +20,4 @@ sections = [
 ]
 
 for section in sections:
-    importlib.import_module(f"plots.{section}").run()
+    importlib.import_module(f"plots.{section}").run(folder=f"img/{section}")

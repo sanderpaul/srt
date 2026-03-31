@@ -54,9 +54,9 @@ SETTINGS = {
 
 def with_global_settings(fn):
     @functools.wraps(fn)
-    def wrapper():
+    def wrapper(*args, **kwargs):
         saved = copy.copy(SETTINGS)
-        fn()
+        fn(*args, **kwargs)
         SETTINGS.clear()
         SETTINGS.update(saved)
     return wrapper

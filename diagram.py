@@ -1,10 +1,28 @@
 import copy
+import functools
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.lines import Line2D
 
 from settings import *
+
+_output_folder = None
+_output_counter = 0
+
+
+def with_output_folder(fn):
+    @functools.wraps(fn)
+    def wrapper(folder=None, *args, **kwargs):
+        global _output_folder, _output_counter
+        _output_folder = folder
+        _output_counter = 0
+        if folder is not None:
+            os.makedirs(folder, exist_ok=True)
+        fn(*args, **kwargs)
+        _output_folder = None
+    return wrapper
 
 
 class Point:
@@ -448,11 +466,16 @@ class Diagram:
         return self
 
     def draw(self, plot_name):
+        global _output_counter
         if self.figure is None:
             self.prepare()
 
         plt.figure(self.figure)
-        plt.savefig(f"./img/{plot_name}.png")
+        if _output_folder is not None:
+            _output_counter += 1
+            plt.savefig(f"{_output_folder}/{_output_counter}.png")
+        else:
+            plt.savefig(f"./img/{plot_name}.png")
         plt.close(self.figure)
 
         self.figure = None

@@ -4,6 +4,7 @@ from settings import *
 
 
 @with_global_settings
+@with_output_folder
 def run():
     # Sixth image: Introduction of worldlines
     plot = Diagram()
